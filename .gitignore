@@ -1,0 +1,24 @@
+# Archivos con contraseñas y secretos (NUNCA subir a GitHub)
+.env
+backend/.env
+*.env
+
+# Base de datos SQLite local
+*.db
+backend/*.db
+electoral.db
+backend/electoral.db
+
+# Python & Entornos
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# IDEs y SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

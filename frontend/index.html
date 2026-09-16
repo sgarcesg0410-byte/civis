@@ -1,0 +1,1991 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Civis | Centro de Mando Electoral & Censo RNEC</title>
+    
+    <!-- Fuentes e Iconos Oficiales -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Favicon Oficial de Votaciones -->
+    <link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=3">
+    <link rel="alternate icon" type="image/svg+xml" href="img/logo-voto.svg?v=3">
+    <link rel="apple-touch-icon" href="img/favicon.svg?v=3">
+    
+    <!-- Hoja de Estilos Ejecutiva -->
+    <link rel="stylesheet" href="css/styles.css?v=3.2">
+
+    <style>
+        /* Estilos críticos para garantizar visualización inmediata de la foto de fondo */
+        .login-bg-backdrop {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100vw; height: 100vh;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .login-bg-img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            object-position: center 20%;
+            filter: brightness(0.68) contrast(1.1);
+            transform: scale(1.02);
+        }
+        .login-bg-overlay {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 75% 30%, rgba(15, 23, 42, 0.35) 0%, rgba(7, 11, 20, 0.78) 75%),
+                        linear-gradient(135deg, rgba(8, 14, 26, 0.8) 0%, rgba(15, 23, 42, 0.45) 50%, rgba(6, 10, 18, 0.82) 100%);
+        }
+        .login-main-container {
+            position: relative;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body data-bs-theme="dark">
+
+    <div id="view-login" class="login-super-wrapper">
+        <!-- FOTOGRAFÍA DE FONDO COMUNITARIO REAL -->
+        <div class="login-bg-backdrop">
+            <img src="img/bg-login.jpg" alt="Fondo Comunitario Electoral" class="login-bg-img">
+            <div class="login-bg-overlay"></div>
+        </div>
+
+        <div class="login-main-container">
+            
+            <!-- PANEL IZQUIERDO: CAPACIDADES ESTRATÉGICAS -->
+            <div class="hero-brand-panel">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <img src="img/logo-voto.svg?v=3" alt="Logo Electoral Civis" style="width: 54px; height: 54px; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.45));">
+                    <div class="official-pill m-0">
+                        <span class="pulse-dot"></span> CIVIS • Software Electoral Multi-Partido • Censo RNEC
+                    </div>
+                </div>
+                <h1 class="hero-title"><span style="color: #CC0000;">CIVIS</span> — Control & Censo Electoral</h1>
+                <p class="hero-subtitle">
+                    Plataforma integral Civis para campañas políticas municipales y departamentales: auditoría de votantes cruzados entre partidos, consulta de puesto y mesa oficial en Registraduría (RNEC) y blindaje logístico en tiempo real.
+                </p>
+
+                <div class="features-list">
+                    <div class="feature-item">
+                        <div class="feature-icon-box icon-red">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h6>Detección Inmediata de Cruces</h6>
+                            <p>Alerta instantánea cuando un ciudadano ha sido registrado por partidos o candidatos rivales.</p>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <div class="feature-icon-box icon-blue">
+                            <i class="fas fa-landmark"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h6>Conexión Oficial Registraduría (RNEC)</h6>
+                            <p>Consulta automática del puesto oficial, dirección y mesa exacta donde vota cada persona.</p>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <div class="feature-icon-box icon-emerald">
+                            <i class="fas fa-hand-holding-usd"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h6>Auditoría Logística Día D</h6>
+                            <p>Control estricto de apoyos de transporte y refrigerios evitando pagos duplicados.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL DERECHO: TARJETA DE ACCESO GLASSMORPHISM -->
+            <div class="login-glass-card">
+                <div class="card-top-header text-center">
+                    <div class="card-top-icon">
+                        <img src="img/logo-voto.svg?v=3" alt="Logo Votaciones Oficial">
+                    </div>
+                    <h4 class="text-white fw-bold mb-1"><span style="color: #CC0000;">CIVIS</span> • Ingreso Seguro</h4>
+                    <p class="text-muted small">Acceso restringido por credenciales y perfil de campaña</p>
+                </div>
+
+                <div id="login-error" class="alert alert-danger py-2 small fw-bold" style="display: none; background: rgba(239, 68, 68, 0.2); border-color: #EF4444; color: #FCA5A5;"></div>
+
+                <form id="form-login">
+                    <div class="input-custom-group">
+                        <label class="input-label-tag">
+                            <i class="fas fa-id-card text-info"></i> Usuario o Cédula
+                        </label>
+                        <div class="input-wrapper-glow">
+                            <i class="fas fa-user-check input-icon-left"></i>
+                            <input type="text" id="login-username" placeholder="Digite su usuario o cédula" required autocomplete="username">
+                        </div>
+                    </div>
+
+                    <div class="input-custom-group">
+                        <label class="input-label-tag">
+                            <i class="fas fa-lock text-info"></i> Contraseña de Acceso
+                        </label>
+                        <div class="input-wrapper-glow">
+                            <i class="fas fa-shield-alt input-icon-left"></i>
+                            <input type="password" id="login-password" placeholder="Digite su contraseña" required autocomplete="current-password">
+                            <button type="button" class="input-btn-toggle-pwd" onclick="togglePasswordVisibility()" title="Ver contraseña">
+                                <i class="fas fa-eye" id="icon-eye-pwd"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-login-super mt-2">
+                        <i class="fas fa-shield-alt me-2"></i> Acceder al Centro de Control
+                    </button>
+
+                    <div class="text-center mt-3">
+                        <small class="text-muted" style="font-size: 0.76rem; color: #94A3B8 !important;">
+                            <i class="fas fa-user-shield me-1 text-danger"></i> ¿Olvidó su contraseña? Solicite el restablecimiento directo al <strong>Superadministrador</strong>.
+                        </small>
+                    </div>
+                </form>
+
+                <!-- SELECTOR DE PERFILES DEMO -->
+                <div class="demo-profiles-box">
+                    <small class="text-muted fw-bold d-block mb-2 text-uppercase" style="letter-spacing: 0.5px; font-size: 0.75rem;">
+                        <i class="fas fa-users-cog me-1"></i> Seleccione un Perfil de Prueba:
+                    </small>
+                    <div class="demo-grid-cards">
+                        <button type="button" class="profile-select-btn" onclick="seleccionarPerfilDemo('superadmin', '123456', 'Superadmin')">
+                            <div class="profile-dot" style="background: #CC0000;"></div>
+                            <div class="profile-info">
+                                <strong>Sebastián</strong>
+                                <small>Superadmin • Propietario</small>
+                            </div>
+                        </button>
+
+                        <button type="button" class="profile-select-btn" onclick="seleccionarPerfilDemo('candidato.liberal', '123456', 'Dr. Mendoza')">
+                            <div class="profile-dot" style="background: #CC0000;"></div>
+                            <div class="profile-info">
+                                <strong>Dr. Mendoza</strong>
+                                <small>Candidato Oficial • Liberal</small>
+                            </div>
+                        </button>
+
+                        <button type="button" class="profile-select-btn" onclick="seleccionarPerfilDemo('lider.rosa', '123456', 'Líder Rosa')">
+                            <div class="profile-dot" style="background: #CC0000;"></div>
+                            <div class="profile-info">
+                                <strong>Líder Rosa</strong>
+                                <small>Líder Territorial • El Porvenir</small>
+                            </div>
+                        </button>
+
+                        <button type="button" class="profile-select-btn" onclick="seleccionarPerfilDemo('candidato.conservador', '123456', 'Ing. Montoya')">
+                            <div class="profile-dot" style="background: #0033A0;"></div>
+                            <div class="profile-info">
+                                <strong>Ing. Montoya</strong>
+                                <small>Candidato Oficial • Conservador</small>
+                            </div>
+                        </button>
+
+                        <button type="button" class="profile-select-btn" onclick="seleccionarPerfilDemo('lider.carlos', '123456', 'Líder Carlos')">
+                            <div class="profile-dot" style="background: #0033A0;"></div>
+                            <div class="profile-info">
+                                <strong>Líder Carlos</strong>
+                                <small>Líder Territorial • Sta Rosa</small>
+                            </div>
+                        </button>
+
+                        <button type="button" class="profile-select-btn" onclick="seleccionarPerfilDemo('candidata.la-u', '123456', 'Dra. Patricia')">
+                            <div class="profile-dot" style="background: #FF8200;"></div>
+                            <div class="profile-info">
+                                <strong>Dra. Patricia</strong>
+                                <small>Candidata Oficial • Partido de la U</small>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- 2. CONSOLA OPERATIVA PARA CANDIDATOS Y LÍDERES -->
+    <!-- ==================================================================== -->
+    <div id="view-lider" style="display: none;">
+        <!-- Header con Tinte Dinámico de Partido -->
+        <header class="app-header">
+            <div class="header-brand">
+                <div class="brand-logo-box">
+                    <img src="img/logo-voto.svg?v=3" alt="Logo Votaciones">
+                </div>
+                <div>
+                    <h5 class="mb-0 fw-bold text-white"><span style="color: #CC0000;">CIVIS</span> | Consola Electoral</h5>
+                    <small class="text-muted">Censo Oficial Registraduría (RNEC) & Registro Operativo</small>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-outline-success btn-sm rounded-pill px-3 fw-bold" onclick="abrirModalMiWhatsapp()" title="Configurar número para recibir alertas de votantes duplicados">
+                    <i class="fab fa-whatsapp me-1"></i> Mi WhatsApp Alertas
+                </button>
+                <span class="badge px-3 py-2 fw-bold" id="badge-partido-user" style="font-size: 0.85rem; border-radius: 20px;">PARTIDO</span>
+                <div class="text-end d-none d-md-block">
+                    <div class="fw-bold text-white fs-6" id="lbl-usuario-nombre">Nombre Usuario</div>
+                    <small class="text-muted" id="lbl-usuario-zona">Zona Asignada</small>
+                </div>
+                <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold" onclick="cerrarSesion()">
+                    <i class="fas fa-sign-out-alt me-1"></i> Salir
+                </button>
+            </div>
+        </header>
+
+        <main class="step-container">
+            <!-- CINTA DE IDENTIDAD Y COLOR DE PARTIDO / CAMPAÑA -->
+            <div class="party-hero-banner" id="banner-partido-container">
+                <div class="party-hero-left">
+                    <div class="party-hero-badge" id="banner-party-pill">
+                        <i class="fas fa-flag me-1"></i> <span id="banner-partido-nombre">PARTIDO POLÍTICO</span>
+                    </div>
+                    <div class="party-candidate-info">
+                        <h4 class="mb-1 fw-bold text-white" id="banner-candidato-nombre">Candidatura Oficial</h4>
+                        <span class="small" id="banner-cargo-nombre"><i class="fas fa-landmark me-1"></i> Alcaldía Municipal • San Antero, Córdoba</span>
+                    </div>
+                </div>
+                <div class="party-hero-right">
+                    <div class="operator-profile-card">
+                        <span class="operator-role-badge" id="banner-rol-badge">LÍDER TERRITORIAL</span>
+                        <div class="operator-name" id="banner-operador-nombre">Operador</div>
+                        <div class="operator-zone" id="banner-operador-zona"><i class="fas fa-map-marker-alt me-1"></i> Zona Asignada</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MINI KPIS OPERATIVOS DE LA CAMPAÑA -->
+            <div class="party-mini-kpi-grid">
+                <div class="party-mini-kpi">
+                    <div>
+                        <div class="val" id="kpi-mini-total">0</div>
+                        <div class="lbl">Votantes en mi Lista</div>
+                    </div>
+                    <div class="icon-box"><i class="fas fa-user-check"></i></div>
+                </div>
+                <div class="party-mini-kpi">
+                    <div>
+                        <div class="val text-success" id="kpi-mini-seguros">0</div>
+                        <div class="lbl">Votantes Seguros (Firme)</div>
+                    </div>
+                    <div class="icon-box"><i class="fas fa-check-double"></i></div>
+                </div>
+                <div class="party-mini-kpi">
+                    <div>
+                        <div class="val text-danger" id="kpi-mini-transporte">0</div>
+                        <div class="lbl">Requieren Transporte</div>
+                    </div>
+                    <div class="icon-box"><i class="fas fa-bus"></i></div>
+                </div>
+                <div class="party-mini-kpi">
+                    <div>
+                        <div class="val text-info" id="kpi-mini-municipio">San Antero</div>
+                        <div class="lbl">Censo RNEC Oficial</div>
+                    </div>
+                    <div class="icon-box"><i class="fas fa-map-marked-alt"></i></div>
+                </div>
+            </div>
+
+            <!-- FLUJO GUIADO DE REGISTRO EN 3 PASOS -->
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number active">1</div>
+                    <div>
+                        <h5 class="fw-bold mb-0 text-white">Consulta y Verificación de Cruce</h5>
+                        <p class="mb-0 text-muted small" style="color: #CBD5E1 !important;">
+                            Digite el número de cédula para consultar en el Censo Oficial RNEC y verificar en tiempo real si ya está registrado en otro partido.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="input-group input-group-lg mb-2">
+                    <input type="number" id="txt-cedula-consulta" class="form-control" placeholder="Ej: 1063165499 ó 1002345678" autofocus>
+                    <button class="btn btn-primary px-4 fw-bold" onclick="consultarCedula()">
+                        <i class="fas fa-search me-1"></i> Consultar
+                    </button>
+                </div>
+
+                <!-- Semáforo de Estado y Alertas de Cruce -->
+                <div id="box-status-cruce" class="status-indicator-box" style="display: none;"></div>
+
+                <!-- PASO 2: DATOS OFICIALES REGISTRADURÍA (RNEC) -->
+                <div id="box-datos-rnec" style="display: none;" class="mt-4 pt-3 border-top border-secondary">
+                    <div class="step-header mb-2">
+                        <div class="step-number active">2</div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-primary"><i class="fas fa-landmark me-1"></i> Datos Oficiales de Votación (Registraduría RNEC)</h6>
+                            <small class="text-muted" style="color: #94A3B8 !important;">Certificación oficial de puesto, dirección y mesa asignada.</small>
+                        </div>
+                    </div>
+
+                    <div class="rnec-info-grid">
+                        <div class="rnec-box">
+                            <small>Ciudadano(a)</small>
+                            <strong id="rnec-nombre" class="text-white">-</strong>
+                        </div>
+                        <div class="rnec-box">
+                            <small>Municipio / Depto</small>
+                            <strong id="rnec-municipio" class="text-white">-</strong>
+                        </div>
+                        <div class="rnec-box">
+                            <small>Puesto de Votación</small>
+                            <strong id="rnec-puesto" class="text-white">-</strong>
+                        </div>
+                        <div class="rnec-box">
+                            <small>Dirección Puesto</small>
+                            <strong id="rnec-direccion" class="text-white">-</strong>
+                        </div>
+                        <div class="rnec-box" style="border-left: 4px solid #CC0000; background: #1C1C22;">
+                            <small class="text-danger fw-bold">Mesa Oficial</small>
+                            <strong id="rnec-mesa" class="text-white fs-4 fw-bold">-</strong>
+                        </div>
+                    </div>
+
+                    <!-- PASO 3: REGISTRO Y APOYO DÍA D -->
+                    <form id="form-registro-votante" class="mt-4 pt-3 border-top border-secondary">
+                        <div class="step-header mb-3">
+                            <div class="step-number active">3</div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-white"><i class="fas fa-user-check me-1"></i> Compromiso y Apoyo Logístico</h6>
+                                <small class="text-muted" style="color: #94A3B8 !important;">Finalice la inscripción vinculando al votante a su campaña.</small>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label>Nombre Completo del Votante</label>
+                                <input type="text" id="txt-nombre-votante" class="form-control" placeholder="Ej: Sebastián Martínez Gómez">
+                            </div>
+                            <div class="col-md-6">
+                                <label>Teléfono / Celular</label>
+                                <input type="text" id="txt-telefono" class="form-control" placeholder="Ej: 3001234567">
+                            </div>
+                            <div class="col-md-6">
+                                <label>Barrio / Dirección de Residencia</label>
+                                <input type="text" id="txt-barrio" class="form-control" placeholder="Ej: Barrio San José, Mz 4 Lote 12">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label>Compromiso</label>
+                                <select id="sel-compromiso" class="form-select">
+                                    <option value="SEGURO">🟢 Seguro (Firme)</option>
+                                    <option value="DUDOSO">🟡 Dudoso (Visitar)</option>
+                                    <option value="POR_CONFIRMAR">⚪ Por Confirmar</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label>Estado Día D</label>
+                                <select id="sel-estado-voto" class="form-select">
+                                    <option value="PENDIENTE">Pendiente por Votar</option>
+                                    <option value="REQUIERE_TRANSPORTE">Requiere Transporte</option>
+                                    <option value="YA_VOTO">Ya Votó (En Urna)</option>
+                                </select>
+                            </div>
+
+                            <!-- Módulo de Apoyo Día D (Opcional) -->
+                            <div class="col-12 mt-2">
+                                <div class="form-check form-switch p-3 rounded" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
+                                    <input class="form-check-input ms-0 me-2" type="checkbox" id="chk-dar-apoyo">
+                                    <label class="form-check-label fw-bold small text-white" for="chk-dar-apoyo">
+                                        <i class="fas fa-hand-holding-usd text-success me-1"></i> Asignar Apoyo Logístico Día D (Transporte / Refrigerio)
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div id="box-apoyo-inputs" class="col-12" style="display: none;">
+                                <div class="row g-2 p-3 rounded" style="background: #172033; border: 1px solid #334155;">
+                                    <div class="col-md-6">
+                                        <label>Tipo de Apoyo</label>
+                                        <select id="sel-tipo-apoyo" class="form-select">
+                                            <option value="Transporte">Transporte / Moto-taxi</option>
+                                            <option value="Refrigerio">Refrigerio / Alimentación</option>
+                                            <option value="Viático Día D">Viático Día D</option>
+                                            <option value="Testigo Electoral">Logística Testigo</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label>Valor Económico ($ COP)</label>
+                                        <input type="number" id="txt-monto-apoyo" class="form-control" placeholder="Ej: 50000" value="50000">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label>Observaciones Adicionales</label>
+                                <input type="text" id="txt-observaciones" class="form-control" placeholder="Ej: Votante de la tercera edad, requiere acompañamiento...">
+                            </div>
+
+                            <div class="col-12 mt-4">
+                                <button type="submit" id="btn-guardar-votante" class="btn-primary-action">
+                                    <i class="fas fa-check-circle me-2"></i> Confirmar y Guardar Votante en mi Campaña
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- TABLA DE MIS VOTANTES INSCRITOS -->
+            <div class="step-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="fw-bold mb-0 text-white"><i class="fas fa-users text-primary me-2"></i> Mis Votantes Registrados</h5>
+                        <small class="text-muted" style="color: #94A3B8 !important;">Lista exclusiva de votantes bajo su responsabilidad.</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-secondary px-3 py-2" id="badge-total-mis-votantes">0 registrados</span>
+                        <button class="btn btn-sm btn-success fw-bold px-3" onclick="exportarMisVotantesExcel()">
+                            <i class="fas fa-file-excel me-1"></i> Exportar Excel
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="custom-table" id="tabla-mis-votantes">
+                        <thead>
+                            <tr>
+                                <th>Cédula</th>
+                                <th>Nombre</th>
+                                <th>Puesto de Votación</th>
+                                <th>Mesa</th>
+                                <th>Compromiso</th>
+                                <th>Estado Día D</th>
+                                <th>Registrado Por</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-mis-votantes"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- 3. WAR ROOM EXCLUSIVO PARA SUPERADMINISTRADORES -->
+    <!-- ==================================================================== -->
+    <div id="view-superadmin" style="display: none;">
+        <!-- Header Superadmin -->
+        <header class="app-header">
+            <div class="header-brand">
+                <div class="brand-logo-box">
+                    <img src="img/logo-voto.svg?v=3" alt="Logo Votaciones">
+                </div>
+                <div>
+                    <h5 class="mb-0 fw-bold text-white"><span style="color: #CC0000;">CIVIS</span> | Centro de Mando Nacional</h5>
+                    <small class="text-muted" style="color: #94A3B8 !important;">Auditoría Inter-Partidista & Control de Fraude Electoral</small>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div id="live-ws-indicator" class="badge bg-danger px-3 py-2 fw-bold" style="display: none; animation: pulse 2s infinite;">
+                    <i class="fas fa-broadcast-tower me-1"></i> EN VIVO
+                </div>
+                <div class="text-end d-none d-md-block">
+                    <div class="fw-bold text-white fs-6" id="lbl-admin-nombre">Sebastián (Administrador General)</div>
+                    <span class="badge-role-tag badge-superadmin-gold"><i class="fas fa-crown me-1"></i> Propietario del Sistema</span>
+                </div>
+                <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold" onclick="cerrarSesion()">
+                    <i class="fas fa-sign-out-alt me-1"></i> Salir
+                </button>
+            </div>
+        </header>
+
+        <main class="war-room-container">
+            <!-- PESTAÑAS DE NAVEGACIÓN WAR ROOM (BARRA SUPERIOR COMPLETA CON TODOS LOS MÓDULOS) -->
+            <ul class="nav nav-pills mb-4 gap-2 p-2 rounded-3" style="background: #141418; border: 1.5px solid #282832;">
+                <!-- 0. Tablero General -->
+                <li class="nav-item">
+                    <button class="nav-link active fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-kpis">
+                        <i class="fas fa-th-large me-1"></i> Mando Central & KPIs
+                    </button>
+                </li>
+
+                <!-- 1. Personas -->
+                <li class="nav-item">
+                    <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-padron" onclick="cargarPadronConsolidado()">
+                        <i class="fas fa-user-friends me-1" style="color: #EAB308;"></i> Personas
+                    </button>
+                </li>
+
+                <!-- 2. Geomapa -->
+                <li class="nav-item">
+                    <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-mapa" onclick="inicializarMapaSuperadmin()">
+                        <i class="fas fa-map-marker-alt me-1" style="color: #38BDF8;"></i> Geomapa
+                    </button>
+                </li>
+
+                <!-- 3. Filtro Dinámico -->
+                <li class="nav-item">
+                    <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-filtro" onclick="inicializarFiltroDinamico()">
+                        <i class="fas fa-filter me-1" style="color: #F97316;"></i> Filtro Dinámico
+                    </button>
+                </li>
+
+                <!-- 4. Eventos -->
+                <li class="nav-item">
+                    <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-eventos">
+                        <i class="fas fa-calendar-alt me-1" style="color: #F43F5E;"></i> Eventos
+                    </button>
+                </li>
+
+                <!-- 5. Cumpleaños y SMS -->
+                <li class="nav-item">
+                    <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-sms">
+                        <i class="fas fa-comment-dots me-1" style="color: #A855F7;"></i> Cumpleaños & SMS
+                    </button>
+                </li>
+
+                <!-- 6. Medios -->
+                <li class="nav-item">
+                    <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-medios">
+                        <i class="fas fa-newspaper me-1" style="color: #FB923C;"></i> Medios
+                    </button>
+                </li>
+
+                <!-- 7. Informes -->
+                <li class="nav-item">
+                    <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-informes">
+                        <i class="fas fa-file-alt me-1" style="color: #FBBF24;"></i> Informes
+                    </button>
+                </li>
+
+                <!-- 8. Operaciones (Cruces en Vivo) -->
+                <li class="nav-item">
+                    <button class="nav-link fw-bold text-danger" data-bs-toggle="pill" data-bs-target="#war-tab-cruces" onclick="cargarCrucesGlobales()">
+                        <i class="fas fa-bolt text-danger me-1"></i> Operaciones
+                    </button>
+                </li>
+
+                <!-- 9. Ranking -->
+                <li class="nav-item">
+                    <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-ranking" onclick="cargarRankingLideres()">
+                        <i class="fas fa-trophy text-warning me-1"></i> Ranking Líderes
+                    </button>
+                </li>
+
+                <!-- 10. Puesto y Censo -->
+                <li class="nav-item">
+                    <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-censo">
+                        <i class="fas fa-id-card me-1" style="color: #EC4899;"></i> Puesto & Censo
+                    </button>
+                </li>
+
+                <!-- 11. Usuarios y Roles -->
+                <li class="nav-item">
+                    <button class="nav-link fw-bold text-white" data-bs-toggle="pill" data-bs-target="#war-tab-equipo" onclick="cargarGestionUsuarios()">
+                        <i class="fas fa-users-cog me-1" style="color: #C084FC;"></i> Usuarios & Roles
+                    </button>
+                </li>
+
+                <!-- 12. App Móvil -->
+                <li class="nav-item">
+                    <button class="nav-link fw-bold text-warning" data-bs-toggle="pill" data-bs-target="#war-tab-app-movil">
+                        <i class="fas fa-mobile-alt me-1"></i> App Móvil
+                    </button>
+                </li>
+
+                <!-- Auditoría Forense -->
+                <li class="nav-item">
+                    <button class="nav-link fw-bold text-info" data-bs-toggle="pill" data-bs-target="#war-tab-auditoria" onclick="cargarAuditoriaForense()">
+                        <i class="fas fa-shield-virus text-info me-1"></i> Bitácora Forense
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <!-- TAB 1: KPIS GLOBALES -->
+                <div class="tab-pane fade show active" id="war-tab-kpis">
+
+                    <div class="kpi-grid">
+                        <div class="kpi-card blue-top">
+                            <div>
+                                <div class="kpi-val" id="kpi-total-votantes">0</div>
+                                <div class="kpi-label">Total Votantes Registrados</div>
+                            </div>
+                            <i class="fas fa-users fa-3x text-primary opacity-50"></i>
+                        </div>
+                        <div class="kpi-card red-top">
+                            <div>
+                                <div class="kpi-val text-danger" id="kpi-total-cruces">0</div>
+                                <div class="kpi-label">Alertas de Cruce Inter-Partidista</div>
+                            </div>
+                            <i class="fas fa-exclamation-triangle fa-3x text-danger opacity-75"></i>
+                        </div>
+                        <div class="kpi-card green-top">
+                            <div>
+                                <div class="kpi-val text-success" id="kpi-votos-confirmados">0</div>
+                                <div class="kpi-label">Votos Confirmados en Urna</div>
+                            </div>
+                            <i class="fas fa-vote-yea fa-3x text-success opacity-50"></i>
+                        </div>
+                        <div class="kpi-card amber-top">
+                            <div>
+                                <div class="kpi-val text-white" id="kpi-inversion-apoyos">$0</div>
+                                <div class="kpi-label">Inversión Apoyos Logísticos</div>
+                            </div>
+                            <i class="fas fa-coins fa-3x text-danger opacity-50"></i>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-lg-6">
+                            <div class="step-card h-100">
+                                <h5 class="fw-bold mb-3 text-white"><i class="fas fa-chart-bar text-primary me-2"></i> Votantes por Partido / Campaña</h5>
+                                <div id="distribucion-partidos" class="pt-2"></div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="step-card h-100">
+                                <h5 class="fw-bold mb-3 text-white"><i class="fas fa-shield-alt text-danger me-2"></i> Protocolo Anti-Fraude Activo</h5>
+                                <p class="small" style="color: #CBD5E1 !important; line-height: 1.6;">
+                                    El motor de cruces compara en tiempo real cada registro contra todas las campañas participantes. Cuando un votante es reclamado por más de una organización política, se registra la colisión y se notifica inmediatamente a esta pantalla vía WebSockets.
+                                </p>
+                                <div class="alert alert-info py-2 small" style="background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.4); color: #93C5FD;">
+                                    <i class="fas fa-info-circle me-1"></i> Los candidatos y líderes no tienen visibilidad de esta sala de control ni de los datos privados de otros partidos.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: AUDITORÍA DE CRUCES GLOBALES -->
+                <div class="tab-pane fade" id="war-tab-cruces">
+                    <div class="step-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h5 class="fw-bold mb-0 text-danger"><i class="fas fa-bolt me-2"></i> Matriz de Cruces en Tiempo Real</h5>
+                                <small class="text-muted" style="color: #94A3B8 !important;">Votantes que han sido comprometidos simultáneamente por más de una campaña rival.</small>
+                            </div>
+                            <button class="btn btn-sm btn-outline-danger fw-bold" onclick="exportarSuperadminExcel('tabla-cruces-globales', 'Reporte_Cruces_Interpartidistas')">
+                                <i class="fas fa-file-excel me-1"></i> Exportar Cruces
+                            </button>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="custom-table" id="tabla-cruces-globales">
+                                <thead>
+                                    <tr>
+                                        <th>Cédula</th>
+                                        <th>Ciudadano</th>
+                                        <th>Campaña Origen</th>
+                                        <th>Campaña en Conflicto</th>
+                                        <th>Puesto / Mesa RNEC</th>
+                                        <th>Hora Detección</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-cruces-globales"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: BITÁCORA FORENSE DE AUDITORÍA (INTENTOS Y HORAS EXACTAS) -->
+                <div class="tab-pane fade" id="war-tab-auditoria">
+                    <div class="step-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                            <div>
+                                <h5 class="fw-bold mb-0 text-white">
+                                    <i class="fas fa-shield-virus text-info me-2"></i> Bitácora Forense de Auditoría: Intentos de Duplicados & Cruces
+                                </h5>
+                                <small class="text-muted" style="color: #94A3B8 !important;">
+                                    Registro de control en tiempo real: hora exacta, operador que intentó el registro, votante comprometido, a quién pertenecía y alerta WhatsApp.
+                                </small>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-info text-dark fw-bold px-3 py-2" id="badge-total-intentos-auditoria">0 eventos</span>
+                                <button class="btn btn-sm btn-outline-info fw-bold" onclick="cargarAuditoriaForense()">
+                                    <i class="fas fa-sync-alt me-1"></i> Refrescar
+                                </button>
+                                <button class="btn btn-sm btn-outline-success fw-bold" onclick="exportarSuperadminExcel('tabla-auditoria-intentos', 'Auditoria_Forense_Intentos_Duplicados')">
+                                    <i class="fas fa-file-excel me-1"></i> Exportar Auditoría
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="custom-table" id="tabla-auditoria-intentos">
+                                <thead>
+                                    <tr>
+                                        <th>Hora & Fecha</th>
+                                        <th>Operador que Intentó</th>
+                                        <th>Votante Comprometido</th>
+                                        <th>Puesto & Mesa RNEC</th>
+                                        <th>Propietario Original</th>
+                                        <th>Alerta WhatsApp</th>
+                                        <th>Acción del Sistema</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-auditoria-intentos">
+                                    <tr><td colspan="7" class="text-center py-4 text-muted">Cargando registros forenses...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: PADRÓN GENERAL CONSOLIDADO -->
+                <div class="tab-pane fade" id="war-tab-padron">
+                    <div class="step-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h5 class="fw-bold mb-0 text-white"><i class="fas fa-database text-primary me-2"></i> Padrón Electoral Consolidado</h5>
+                                <small class="text-muted" style="color: #94A3B8 !important;">Totalidad de ciudadanos registrados en todas las campañas.</small>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-secondary" id="badge-total-padron-general">0 registros</span>
+                                <button class="btn btn-sm btn-success fw-bold" onclick="exportarSuperadminExcel('tabla-padron-general', 'Padron_Electoral_Consolidado')">
+                                    <i class="fas fa-file-excel me-1"></i> Exportar Padrón
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="custom-table" id="tabla-padron-general">
+                                <thead>
+                                    <tr>
+                                        <th>Cédula</th>
+                                        <th>Votante</th>
+                                        <th>Partido & Candidato</th>
+                                        <th>Puesto Oficial (RNEC)</th>
+                                        <th>Líder Registrador</th>
+                                        <th>Estado Día D</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-padron-general"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: MAPA GPS -->
+                <div class="tab-pane fade" id="war-tab-mapa">
+                    <div class="step-card">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0 text-white"><i class="fas fa-map-marker-alt text-danger me-2"></i> Mapa de Cobertura Electoral</h5>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="mapaGlobal.setView([9.3739, -75.7600], 13)">
+                                <i class="fas fa-crosshairs me-1"></i> Centrar San Antero
+                            </button>
+                        </div>
+                        <div id="mapa-global-calor" style="height: 520px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);"></div>
+                    </div>
+                </div>
+
+                <!-- TAB 5: GESTIÓN INTEGRAL DE USUARIOS Y ASIGNACIÓN DE ROLES -->
+                <div class="tab-pane fade" id="war-tab-equipo">
+                    <div class="step-card">
+                        
+                        <!-- Encabezado de Gestión -->
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                            <div>
+                                <h5 class="fw-bold mb-1 text-white">
+                                    <i class="fas fa-users-cog text-primary me-2"></i> Gestión Central de Usuarios & Asignación de Roles
+                                </h5>
+                                <small class="text-muted" style="color: #94A3B8 !important;">
+                                    Panel de administración exclusivo: cree usuarios, asigne roles (Superadmin, Candidato, Líder), vincule a campañas y defina zonas territoriales.
+                                </small>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <button class="btn btn-primary fw-bold px-3" onclick="toggleFormularioNuevoUsuario()">
+                                    <i class="fas fa-user-plus me-1"></i> + Crear Nuevo Usuario
+                                </button>
+                                <button class="btn btn-outline-success btn-sm fw-bold px-3" onclick="exportarSuperadminExcel('tabla-usuarios-general', 'Directorio_Usuarios_Sistema')">
+                                    <i class="fas fa-file-excel me-1"></i> Exportar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Métricas y Filtros Rápidos por Rol -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-6 col-md-3">
+                                <div class="p-3 rounded text-center" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); cursor: pointer;" onclick="filtrarUsuariosPorRol('TODOS')">
+                                    <div class="fs-4 fw-bold text-white" id="cnt-usr-total">0</div>
+                                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem;">Todos los Usuarios</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="p-3 rounded text-center" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); cursor: pointer;" onclick="filtrarUsuariosPorRol('SUPERADMIN')">
+                                    <div class="fs-4 fw-bold text-danger" id="cnt-usr-superadmins">0</div>
+                                    <small class="text-danger text-uppercase fw-bold" style="font-size: 0.72rem;">Superadmins</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="p-3 rounded text-center" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); cursor: pointer;" onclick="filtrarUsuariosPorRol('CANDIDATO')">
+                                    <div class="fs-4 fw-bold text-primary" id="cnt-usr-candidatos">0</div>
+                                    <small class="text-primary text-uppercase fw-bold" style="font-size: 0.72rem;">Candidatos</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="p-3 rounded text-center" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); cursor: pointer;" onclick="filtrarUsuariosPorRol('LIDER')">
+                                    <div class="fs-4 fw-bold text-success" id="cnt-usr-lideres">0</div>
+                                    <small class="text-success text-uppercase fw-bold" style="font-size: 0.72rem;">Líderes Operativos</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Formulario Desplegable para Crear Nuevo Usuario -->
+                        <div id="card-form-crear-usuario" class="p-4 rounded mb-4" style="display: none; background: #160D12; border: 1.5px solid #381A22; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold text-white mb-0">
+                                    <i class="fas fa-user-plus text-primary me-2"></i> Formulario de Alta y Asignación de Roles
+                                </h6>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleFormularioNuevoUsuario()">
+                                    <i class="fas fa-times me-1"></i> Cerrar
+                                </button>
+                            </div>
+
+                            <form id="form-crear-usuario" onsubmit="guardarUsuarioSistema(event)" class="row g-3">
+                                <!-- 1. Selección de Rol -->
+                                <div class="col-md-4">
+                                    <label class="fw-bold text-white small mb-1"><i class="fas fa-id-badge text-danger me-1"></i> Rol en el Sistema *</label>
+                                    <select id="usr-rol-nuevo" class="form-select fw-bold" onchange="actualizarCamposPorRol()" required>
+                                        <option value="LIDER">👤 Líder Territorial (Registro y Apoyos)</option>
+                                        <option value="CANDIDATO">🏛️ Candidato Oficial (Monitoreo Campaña)</option>
+                                        <option value="SUPERADMIN">🛡️ Superadministrador (Control Total)</option>
+                                    </select>
+                                </div>
+
+                                <!-- 2. Campaña / Partido (Dinámico) -->
+                                <div class="col-md-4" id="box-select-campana">
+                                    <label class="fw-bold text-white small mb-1"><i class="fas fa-flag text-info me-1"></i> Campaña / Partido Político *</label>
+                                    <select id="usr-campana-nueva" class="form-select">
+                                        <option value="">-- Cargando campañas... --</option>
+                                    </select>
+                                </div>
+
+                                <!-- 3. Zona / Territorio -->
+                                <div class="col-md-4">
+                                    <label class="fw-bold text-white small mb-1"><i class="fas fa-map-marker-alt text-danger me-1"></i> Zona / Barrio / Corregimiento</label>
+                                    <input type="text" id="usr-zona-nueva" class="form-control" placeholder="Ej: Corregimiento El Porvenir" list="lista-zonas-san-antero" required>
+                                    <datalist id="lista-zonas-san-antero">
+                                        <option value="San Antero - Cabecera Principal">
+                                        <option value="Corregimiento El Porvenir">
+                                        <option value="Corregimiento Santa Rosa del Volcán">
+                                        <option value="Corregimiento El Bijao">
+                                        <option value="Corregimiento Tijeretas">
+                                        <option value="Corregimiento San Rafael">
+                                        <option value="Punta Bolívar / Playa Blanca">
+                                        <option value="Vereda Las Nubes">
+                                        <option value="Vereda La América">
+                                        <option value="Vereda El Reposo">
+                                        <option value="Vereda Caño Grande">
+                                        <option value="San Antero - Comando Central">
+                                    </datalist>
+                                </div>
+
+                                <!-- 4. Datos Personales -->
+                                <div class="col-md-4">
+                                    <label class="fw-bold text-white small mb-1">Nombre Completo *</label>
+                                    <input type="text" id="usr-nombre-nuevo" class="form-control" placeholder="Ej: Manuel Pacheco Gómez" required>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="fw-bold text-white small mb-1">Cédula de Ciudadanía *</label>
+                                    <input type="number" id="usr-cedula-nueva" class="form-control" placeholder="Ej: 1063123456" required>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="fw-bold text-white small mb-1">Teléfono / Celular</label>
+                                    <input type="tel" id="usr-telefono-nuevo" class="form-control" placeholder="Ej: 3001234567">
+                                </div>
+
+                                <!-- 5. Credenciales de Acceso -->
+                                <div class="col-md-6">
+                                    <label class="fw-bold text-white small mb-1"><i class="fas fa-user-circle text-info me-1"></i> Nombre de Usuario (Login) *</label>
+                                    <input type="text" id="usr-username-nuevo" class="form-control" placeholder="Ej: lider.manuel" required autocomplete="username">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="fw-bold text-white small mb-1"><i class="fas fa-key text-danger me-1"></i> Contraseña de Acceso *</label>
+                                    <input type="password" id="usr-password-nueva" class="form-control" placeholder="Contraseña de inicio de sesión" required autocomplete="new-password">
+                                </div>
+
+                                <div class="col-12 text-end mt-3">
+                                    <button type="submit" id="btn-guardar-usr-sistema" class="btn btn-primary fw-bold px-4 py-2">
+                                        <i class="fas fa-user-check me-2"></i> Guardar y Habilitar Usuario
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Tabla de Todos los Usuarios del Sistema -->
+                        <div class="table-responsive">
+                            <table class="custom-table" id="tabla-usuarios-general">
+                                <thead>
+                                    <tr>
+                                        <th>Usuario</th>
+                                        <th>Nombre & Cédula</th>
+                                        <th>Rol Asignado</th>
+                                        <th>Partido / Campaña</th>
+                                        <th>Zona / Jurisdicción</th>
+                                        <th>Votantes</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-usuarios-general"></tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- TAB 6: SHOWCASE APP MÓVIL (REFERENCIA EXACTA IMAGEN 2) -->
+                <div class="tab-pane fade" id="war-tab-app-movil">
+                    <div class="app-showcase-container">
+                        <div class="row align-items-center g-5">
+                            
+                            <!-- Mockup de Smartphone con Escáner MRZ -->
+                            <div class="col-lg-5 text-center">
+                                <div class="phone-mockup-frame">
+                                    <div class="phone-island"></div>
+                                    <div class="phone-top-bar">
+                                        <div class="phone-bar-line"></div>
+                                        <div class="phone-avatar-circle">
+                                            <i class="fas fa-user text-dark"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Visor del Escáner con Retículas Doradas y Rayo Láser -->
+                                    <div class="phone-scanner-box" id="phone-scanner-box-demo">
+                                        <div class="scanner-corner sc-tl"></div>
+                                        <div class="scanner-corner sc-tr"></div>
+                                        <div class="scanner-corner sc-bl"></div>
+                                        <div class="scanner-corner sc-br"></div>
+                                        <div class="scanner-laser"></div>
+                                        
+                                        <!-- Ilustración Cédula MRZ -->
+                                        <div class="phone-card-graphic">
+                                            <div class="phone-card-photo">
+                                                <i class="fas fa-id-badge"></i>
+                                            </div>
+                                            <div class="phone-card-lines">
+                                                <span style="width: 85%;"></span>
+                                                <span style="width: 55%;"></span>
+                                                <span style="width: 70%;"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Botón Principal de Captura Móvil -->
+                                    <button type="button" class="phone-scan-btn" onclick="simularLecturaMovil()" title="Presione para simular lectura biométrica MRZ">
+                                        <span></span>
+                                    </button>
+
+                                    <!-- Tarjetas y Pills de Verificación Inferior -->
+                                    <div class="phone-bottom-cards">
+                                        <div class="phone-mini-pill">
+                                            <div class="pill-color-bar" style="background: #F59E0B;"></div>
+                                        </div>
+                                        <div class="phone-mini-pill">
+                                            <div class="pill-color-bar" style="background: #38BDF8;"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="phone-bottom-item mb-2">
+                                        <i class="fas fa-check-circle check-icon"></i>
+                                        <div class="line-item" style="width: 85%;"></div>
+                                    </div>
+                                    <div class="phone-bottom-item">
+                                        <i class="fas fa-check-circle check-icon"></i>
+                                        <div class="line-item" style="width: 60%;"></div>
+                                    </div>
+
+                                    <!-- Alerta Flotante de Simulación -->
+                                    <div id="phone-feedback-scan" class="mt-3 p-2 rounded small text-center" style="display: none; background: rgba(245, 158, 11, 0.2); border: 1px solid #F59E0B; color: #F59E0B; font-weight: bold;">
+                                        <i class="fas fa-check-double me-1"></i> Cédula 1.063.245.981 Verificada en RNEC
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Especificaciones Oficiales de la Aplicación -->
+                            <div class="col-lg-7">
+                                <div class="badge px-3 py-2 fw-bold mb-3" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.35); color: #F59E0B; border-radius: 20px; font-size: 0.85rem;">
+                                    <i class="fas fa-mobile-alt me-1"></i> APLICACIÓN MÓVIL CIVIS • LÍDERES TERRITORIALES
+                                </div>
+                                <h1 class="app-feature-title">Tu campaña en el bolsillo de cada líder</h1>
+                                <p class="app-feature-desc">
+                                    La aplicación móvil de Civis convierte a cada líder en un punto de registro. Escanea la cédula, captura la ubicación y suma el votante a la base de datos en segundos, incluso en zonas con mala señal.
+                                </p>
+
+                                <ul class="app-feature-list">
+                                    <li class="app-feature-item">
+                                        <i class="fas fa-check-circle"></i>
+                                        <div class="feat-text">
+                                            <strong>Escáner de cédula</strong> con lectura automática del código MRZ: sin digitar a mano
+                                        </div>
+                                    </li>
+                                    <li class="app-feature-item">
+                                        <i class="fas fa-check-circle"></i>
+                                        <div class="feat-text">
+                                            <strong>Georreferenciación automática</strong> del registro con GPS del dispositivo
+                                        </div>
+                                    </li>
+                                    <li class="app-feature-item">
+                                        <i class="fas fa-check-circle"></i>
+                                        <div class="feat-text">
+                                            <strong>Consulta de puesto de votación</strong> por número de cédula, en el sitio
+                                        </div>
+                                    </li>
+                                    <li class="app-feature-item">
+                                        <i class="fas fa-check-circle"></i>
+                                        <div class="feat-text">
+                                            <strong>Registro de asistencia</strong> a eventos y actividades de campaña
+                                        </div>
+                                    </li>
+                                    <li class="app-feature-item">
+                                        <i class="fas fa-check-circle"></i>
+                                        <div class="feat-text">
+                                            <strong>Noticias y contenidos</strong> de la campaña para mantener informada a la base
+                                        </div>
+                                    </li>
+                                    <li class="app-feature-item">
+                                        <i class="fas fa-check-circle"></i>
+                                        <div class="feat-text">
+                                            <strong>Tolerante a la mala señal</strong> : detecta la conexión y sincroniza al recuperarla
+                                        </div>
+                                    </li>
+                                </ul>
+
+                                <div class="d-flex flex-wrap gap-3 pt-2">
+                                    <button class="btn btn-warning fw-bold px-4 py-2 text-dark rounded-pill" onclick="simularLecturaMovil()">
+                                        <i class="fas fa-bolt me-2"></i> Probar Escaneo MRZ en Vivo
+                                    </button>
+                                    <button class="btn btn-outline-light fw-bold px-4 py-2 rounded-pill" onclick="mostrarModalGuiaApp()">
+                                        <i class="fas fa-download me-2"></i> Guía de Instalación Móvil (PWA)
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 7: RANKING Y RENDIMIENTO POR LÍDER -->
+                <div class="tab-pane fade" id="war-tab-ranking">
+                    <div class="step-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                            <div>
+                                <h5 class="fw-bold mb-0 text-white">
+                                    <i class="fas fa-trophy text-warning me-2"></i> Ranking & Rendimiento de Líderes Territoriales
+                                </h5>
+                                <small class="text-muted" style="color: #94A3B8 !important;">
+                                    Monitoreo de efectividad en tiempo real: número de votantes inscritos, metas alcanzadas y confirmación en urnas.
+                                </small>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <button class="btn btn-sm btn-outline-warning fw-bold" onclick="cargarRankingLideres()">
+                                    <i class="fas fa-sync-alt me-1"></i> Actualizar Ranking
+                                </button>
+                                <button class="btn btn-sm btn-outline-success fw-bold" onclick="exportarSuperadminExcel('tabla-ranking-lideres', 'Ranking_Rendimiento_Lideres')">
+                                    <i class="fas fa-file-excel me-1"></i> Exportar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Podio Top 3 de Líderes -->
+                        <div class="row g-3 mb-4" id="podio-top-lideres">
+                            <!-- Inyectado dinámicamente con JS -->
+                        </div>
+
+                        <!-- Tabla Completa de Ranking -->
+                        <div class="table-responsive">
+                            <table class="custom-table" id="tabla-ranking-lideres">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 80px;">Posición</th>
+                                        <th>Líder Territorial</th>
+                                        <th>Zona / Jurisdicción</th>
+                                        <th>Candidato / Partido</th>
+                                        <th>Votantes Inscritos</th>
+                                        <th>Votos Confirmados (Día D)</th>
+                                        <th>Efectividad</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-ranking-lideres">
+                                    <tr><td colspan="7" class="text-center py-4 text-muted">Cargando métricas de líderes...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 8: FILTRO DINÁMICO MULTICRITERIO -->
+                <div class="tab-pane fade" id="war-tab-filtro">
+                    <div class="step-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                            <div>
+                                <h5 class="fw-bold mb-0 text-white">
+                                    <i class="fas fa-filter me-2" style="color: #F97316;"></i> Filtro Dinámico Multicriterio del Censo
+                                </h5>
+                                <small class="text-muted" style="color: #94A3B8 !important;">
+                                    Segmentación avanzada de votantes en tiempo real por partido, líder, puesto de votación y estado.
+                                </small>
+                            </div>
+                            <button class="btn btn-sm btn-outline-success fw-bold" onclick="exportarSuperadminExcel('tabla-filtro-dinamico', 'Segmentacion_Votantes_Filtrados')">
+                                <i class="fas fa-file-excel me-1"></i> Exportar Vista Filtrada
+                            </button>
+                        </div>
+
+                        <!-- Barra de Filtros en Cascada -->
+                        <div class="p-3 rounded mb-4" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="small text-muted fw-bold mb-1">Buscar por Cédula o Nombre:</label>
+                                    <input type="text" id="filtro-txt-busqueda" class="form-control form-control-sm text-white" style="background: #0D111A; border-color: #262E3D;" placeholder="Ej: 1063 o Gómez..." oninput="ejecutarFiltroDinamico()">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="small text-muted fw-bold mb-1">Partido Político:</label>
+                                    <select id="filtro-sel-partido" class="form-select form-select-sm" onchange="ejecutarFiltroDinamico()">
+                                        <option value="TODOS">Todos los Partidos</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="small text-muted fw-bold mb-1">Puesto de Votación RNEC:</label>
+                                    <select id="filtro-sel-puesto" class="form-select form-select-sm" onchange="ejecutarFiltroDinamico()">
+                                        <option value="TODOS">Todos los Puestos</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="small text-muted fw-bold mb-1">Estado Día D:</label>
+                                    <select id="filtro-sel-estado" class="form-select form-select-sm" onchange="ejecutarFiltroDinamico()">
+                                        <option value="TODOS">Todos los Estados</option>
+                                        <option value="YA_VOTO">✅ Voto Confirmado</option>
+                                        <option value="PENDIENTE">⏳ Pendiente por Votar</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-secondary">
+                                <span class="small text-info fw-bold" id="lbl-filtro-contador-resultados">Mostrando 0 de 0 registros</span>
+                                <button class="btn btn-sm btn-outline-secondary py-0" onclick="limpiarFiltroDinamico()">
+                                    <i class="fas fa-undo me-1"></i> Restablecer Filtros
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Resultados del Filtro -->
+                        <div class="table-responsive">
+                            <table class="custom-table" id="tabla-filtro-dinamico">
+                                <thead>
+                                    <tr>
+                                        <th>Cédula</th>
+                                        <th>Votante</th>
+                                        <th>Partido & Candidato</th>
+                                        <th>Puesto Oficial (RNEC)</th>
+                                        <th>Líder Responsable</th>
+                                        <th>Estado Día D</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-filtro-dinamico">
+                                    <tr><td colspan="6" class="text-center py-4 text-muted">Cargando base de datos para filtrado...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 9: EVENTOS & AGENDA DE CAMPAÑA -->
+                <div class="tab-pane fade" id="war-tab-eventos">
+                    <div class="step-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                            <div>
+                                <h5 class="fw-bold mb-0 text-white">
+                                    <i class="fas fa-calendar-alt text-danger me-2"></i> Gestión de Eventos & Control de Asistencias
+                                </h5>
+                                <small class="text-muted" style="color: #94A3B8 !important;">Programe concentraciones, reuniones territoriales y registre asistencias de votantes.</small>
+                            </div>
+                            <button class="btn btn-sm btn-outline-danger fw-bold" onclick="exportarSuperadminExcel('tabla-eventos-asistencias', 'Asistencias_Eventos_Campana')">
+                                <i class="fas fa-file-excel me-1"></i> Exportar Asistencias
+                            </button>
+                        </div>
+
+                        <div class="row g-4">
+                            <!-- Formulario de Nuevo Evento -->
+                            <div class="col-lg-4">
+                                <div class="p-3 rounded" style="background: rgba(244, 63, 94, 0.08); border: 1px solid rgba(244, 63, 94, 0.25);">
+                                    <h6 class="fw-bold text-white mb-3"><i class="fas fa-plus-circle text-danger me-2"></i> Programar Nueva Actividad</h6>
+                                    <div class="mb-2">
+                                        <label class="small text-muted fw-bold">Nombre del Evento:</label>
+                                        <input type="text" id="ev-tab-nombre" class="form-control form-control-sm text-white" style="background: #0B0E14; border-color: #2D3548;" placeholder="Ej: Gran Concentración Central">
+                                    </div>
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-6">
+                                            <label class="small text-muted fw-bold">Fecha:</label>
+                                            <input type="date" id="ev-tab-fecha" class="form-control form-control-sm text-white" style="background: #0B0E14; border-color: #2D3548;">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="small text-muted fw-bold">Hora:</label>
+                                            <input type="time" id="ev-tab-hora" class="form-control form-control-sm text-white" style="background: #0B0E14; border-color: #2D3548;">
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="small text-muted fw-bold">Lugar / Corregimiento:</label>
+                                        <input type="text" id="ev-tab-lugar" class="form-control form-control-sm text-white" style="background: #0B0E14; border-color: #2D3548;" placeholder="Ej: Corregimiento El Porvenir">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="small text-muted fw-bold">Meta de Asistentes:</label>
+                                        <input type="number" id="ev-tab-meta" class="form-control form-control-sm text-white" style="background: #0B0E14; border-color: #2D3548;" placeholder="Ej: 500">
+                                    </div>
+                                    <button class="btn btn-danger btn-sm fw-bold w-100" onclick="agregarEventoDesdeTab()">
+                                        <i class="fas fa-calendar-check me-1"></i> Publicar en Agenda
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Listado y Asistencias -->
+                            <div class="col-lg-8">
+                                <div class="table-responsive">
+                                    <table class="custom-table" id="tabla-eventos-asistencias">
+                                        <thead>
+                                            <tr>
+                                                <th>Evento</th>
+                                                <th>Fecha & Hora</th>
+                                                <th>Lugar</th>
+                                                <th>Meta</th>
+                                                <th>Confirmados</th>
+                                                <th>Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbody-eventos-tab">
+                                            <tr>
+                                                <td><strong class="text-white">Gran Concentración de Cierre</strong></td>
+                                                <td><span class="badge bg-danger">Sábado 17:00</span></td>
+                                                <td>Plaza Principal San Antero</td>
+                                                <td>2.500 personas</td>
+                                                <td><span class="badge bg-success">1.840 confirmados</span></td>
+                                                <td><span class="badge bg-primary">En Convocatoria</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong class="text-white">Capacitación de Testigos y Jurados</strong></td>
+                                                <td><span class="badge bg-info">Viernes 09:00</span></td>
+                                                <td>Sede Central Campaña</td>
+                                                <td>120 personas</td>
+                                                <td><span class="badge bg-success">98 confirmados</span></td>
+                                                <td><span class="badge bg-warning text-dark">Confirmado</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong class="text-white">Encuentro Comunitario El Porvenir</strong></td>
+                                                <td><span class="badge bg-secondary">Jueves 16:30</span></td>
+                                                <td>Polideportivo El Porvenir</td>
+                                                <td>350 personas</td>
+                                                <td><span class="badge bg-success">310 confirmados</span></td>
+                                                <td><span class="badge bg-success">Realizado</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 10: CUMPLEAÑOS & SMS MASIVO -->
+                <div class="tab-pane fade" id="war-tab-sms">
+                    <div class="step-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                            <div>
+                                <h5 class="fw-bold mb-0 text-white">
+                                    <i class="fas fa-comment-dots text-purple me-2" style="color: #A855F7;"></i> Centro de Mensajería Masiva SMS & Saludo de Cumpleaños
+                                </h5>
+                                <small class="text-muted" style="color: #94A3B8 !important;">Automatice el contacto directo con los votantes para fidelización y movilización el Día D.</small>
+                            </div>
+                            <span class="badge bg-dark border border-secondary text-info px-3 py-2 fw-bold">
+                                <i class="fas fa-signal me-1"></i> Gateway SMS Conectado
+                            </span>
+                        </div>
+
+                        <div class="row g-4">
+                            <!-- Automatización de Cumpleaños -->
+                            <div class="col-lg-6">
+                                <div class="p-3 rounded h-100" style="background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.25);">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="fw-bold text-white mb-0"><i class="fas fa-birthday-cake text-purple me-2" style="color: #C084FC;"></i> Felicitaciones Automáticas</h6>
+                                        <span class="badge bg-success">Activo 08:00 AM</span>
+                                    </div>
+                                    <p class="small text-muted mb-3">
+                                        El bot saluda diariamente a los ciudadanos que cumplen años en el padrón electoral oficial.
+                                    </p>
+                                    <div class="mb-3">
+                                        <label class="small text-muted fw-bold">Mensaje de Felicitación Institucional:</label>
+                                        <textarea id="txt-sms-tab-cumple" rows="3" class="form-control form-control-sm text-white" style="background: #0B0E14; border-color: #2D3548;">¡Feliz cumpleaños {NOMBRE}! En este día especial te enviamos un cálido saludo y los mejores deseos para ti y tu familia. Un fuerte abrazo.</textarea>
+                                    </div>
+                                    <div class="p-3 rounded mb-3" style="background: #0B0E14; border: 1px solid #282832;">
+                                        <div class="fw-bold text-white small mb-1"><i class="fas fa-users text-warning me-1"></i> Cumpleañeros de Hoy en el Padrón:</div>
+                                        <ul class="list-unstyled mb-0 small text-light ps-2">
+                                            <li class="d-flex justify-content-between py-1 border-bottom border-secondary">
+                                                <span><strong>Carlos M. Benítez</strong> (C.C. 78.542.903)</span>
+                                                <span class="badge bg-success"><i class="fas fa-check me-1"></i> SMS Enviado</span>
+                                            </li>
+                                            <li class="d-flex justify-content-between py-1 border-bottom border-secondary">
+                                                <span><strong>Lucía Gómez Paternina</strong> (C.C. 1.063.118.420)</span>
+                                                <span class="badge bg-success"><i class="fas fa-check me-1"></i> SMS Enviado</span>
+                                            </li>
+                                            <li class="d-flex justify-content-between py-1">
+                                                <span><strong>Jorge Eliécer Díaz</strong> (C.C. 15.241.980)</span>
+                                                <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i> Programado</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Despacho Masivo SMS -->
+                            <div class="col-lg-6">
+                                <div class="p-3 rounded h-100" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);">
+                                    <h6 class="fw-bold text-white mb-2"><i class="fas fa-paper-plane text-info me-2"></i> Envío Masivo de Campaña</h6>
+                                    <div class="mb-2">
+                                        <label class="small text-muted fw-bold">Segmento Destinatario:</label>
+                                        <select id="sms-sel-segmento" class="form-select form-select-sm text-white" style="background: #0B0E14; border-color: #2D3548;">
+                                            <option value="TODOS">Todos los Votantes con Celular Registrado</option>
+                                            <option value="LIDERES">Solo Líderes Territoriales</option>
+                                            <option value="PENDIENTES">Votantes Pendientes por Votar (Día D)</option>
+                                            <option value="PORVENIR">Corregimiento El Porvenir</option>
+                                            <option value="CABECERA">San Antero - Cabecera Principal</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="small text-muted fw-bold">Contenido del SMS (Máx. 160 caracteres):</label>
+                                        <textarea id="sms-txt-contenido" rows="3" class="form-control form-control-sm text-white" style="background: #0B0E14; border-color: #2D3548;" maxlength="160" placeholder="Escriba el comunicado o recordatorio de votación..." oninput="document.getElementById('sms-char-counter').textContent = this.value.length + ' / 160'"></textarea>
+                                    </div>
+                                    <div class="d-flex justify-content-between small text-muted mb-3">
+                                        <span>Costo estimado: $0 (Plan Ilimitado)</span>
+                                        <span id="sms-char-counter">0 / 160</span>
+                                    </div>
+                                    <button class="btn btn-primary fw-bold w-100" onclick="despacharSmsMasivo()">
+                                        <i class="fas fa-broadcast-tower me-2"></i> Despachar Mensajes SMS
+                                    </button>
+                                    <div id="box-sms-feedback" class="mt-3 p-2 rounded small text-center" style="display: none; background: rgba(34, 197, 94, 0.15); border: 1px solid #22C55E; color: #86EFAC;">
+                                        <i class="fas fa-check-circle me-1"></i> ¡420 mensajes despachados al gateway de telecomunicaciones!
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 11: MEDIOS, CONTENIDOS & PRENSA -->
+                <div class="tab-pane fade" id="war-tab-medios">
+                    <div class="step-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                            <div>
+                                <h5 class="fw-bold mb-0 text-white">
+                                    <i class="fas fa-newspaper text-warning me-2" style="color: #FB923C;"></i> Centro de Medios, Contenidos & Prensa de Campaña
+                                </h5>
+                                <small class="text-muted" style="color: #94A3B8 !important;">Repositorio oficial para distribuir material de campaña a los líderes y mantener informada a la ciudadanía.</small>
+                            </div>
+                        </div>
+
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-4">
+                                <div class="p-3 rounded border border-secondary text-center h-100" style="background: #0D111A;">
+                                    <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
+                                    <h6 class="text-white fw-bold mb-1">Programa de Gobierno Oficial</h6>
+                                    <small class="text-muted d-block mb-3">Documento legal radicado ante la Registraduría (2026-2029)</small>
+                                    <button class="btn btn-sm btn-outline-danger w-100" onclick="alert('📄 Abriendo Programa de Gobierno Oficial...')">
+                                        <i class="fas fa-download me-1"></i> Descargar Documento
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 rounded border border-secondary text-center h-100" style="background: #0D111A;">
+                                    <i class="fas fa-images fa-3x text-warning mb-3" style="color: #F59E0B;"></i>
+                                    <h6 class="text-white fw-bold mb-1">Kit Gráfico para Líderes</h6>
+                                    <small class="text-muted d-block mb-3">Logos oficiales, plantillas para historias y estados de WhatsApp</small>
+                                    <button class="btn btn-sm btn-outline-warning w-100" onclick="alert('🎨 Descargando pack de piezas gráficas para redes...')">
+                                        <i class="fas fa-download me-1"></i> Descargar Kit Gráfico
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 rounded border border-secondary text-center h-100" style="background: #0D111A;">
+                                    <i class="fas fa-bullhorn fa-3x text-info mb-3"></i>
+                                    <h6 class="text-white fw-bold mb-1">Boletines y Comunicados</h6>
+                                    <small class="text-muted d-block mb-3">Notas de prensa y comunicados frente a desinformación</small>
+                                    <button class="btn btn-sm btn-outline-info w-100" onclick="alert('📰 Visualizando últimos boletines de prensa de campaña...')">
+                                        <i class="fas fa-external-link-alt me-1"></i> Ver Boletines
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);">
+                            <h6 class="fw-bold text-white mb-2"><i class="fas fa-share-alt text-primary me-2"></i> Enlaces Oficiales de Difusión:</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button class="btn btn-sm btn-outline-light" onclick="copiarEnlaceCampana('Página Web Oficial')"><i class="fas fa-globe me-1"></i> Página Web Oficial</button>
+                                <button class="btn btn-sm btn-outline-success" onclick="copiarEnlaceCampana('Canal de WhatsApp')"><i class="fab fa-whatsapp me-1"></i> Canal de WhatsApp</button>
+                                <button class="btn btn-sm btn-outline-primary" onclick="copiarEnlaceCampana('Página de Facebook')"><i class="fab fa-facebook me-1"></i> Facebook Campaña</button>
+                                <button class="btn btn-sm btn-outline-info" onclick="copiarEnlaceCampana('Perfil de Instagram')"><i class="fab fa-instagram me-1"></i> Instagram</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 12: INFORMES & REPORTES EXPORTABLES -->
+                <div class="tab-pane fade" id="war-tab-informes">
+                    <div class="step-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                            <div>
+                                <h5 class="fw-bold mb-0 text-white">
+                                    <i class="fas fa-file-excel text-success me-2"></i> Centro de Exportación de Informes & Reportes
+                                </h5>
+                                <small class="text-muted" style="color: #94A3B8 !important;">Descargue datos consolidados en formato Excel (.xlsx) estructurados para análisis directivo y auditoría.</small>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="p-4 rounded border border-secondary h-100 d-flex flex-column justify-content-between" style="background: #0D111A;">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="fw-bold text-white mb-0">Padrón Electoral Consolidado</h6>
+                                            <i class="fas fa-file-excel text-success fa-2x"></i>
+                                        </div>
+                                        <p class="small text-muted mb-3">
+                                            Incluye la totalidad de los ciudadanos inscritos, cédula, nombres, puesto de votación, mesa, candidato y líder responsable.
+                                        </p>
+                                    </div>
+                                    <button class="btn btn-success fw-bold w-100" onclick="exportarSuperadminExcel('tabla-padron-general', 'Padron_Nacional_Consolidado')">
+                                        <i class="fas fa-download me-2"></i> Descargar Padrón (.xlsx)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="p-4 rounded border border-secondary h-100 d-flex flex-column justify-content-between" style="background: #0D111A;">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="fw-bold text-white mb-0">Cruces e Inconsistencias Interpartidistas</h6>
+                                            <i class="fas fa-file-excel text-danger fa-2x"></i>
+                                        </div>
+                                        <p class="small text-muted mb-3">
+                                            Registro de votantes disputados simultáneamente por dos campañas rivales con fecha y hora de detección.
+                                        </p>
+                                    </div>
+                                    <button class="btn btn-danger fw-bold w-100" onclick="exportarSuperadminExcel('tabla-cruces-globales', 'Cruces_Interpartidistas_Día_D')">
+                                        <i class="fas fa-download me-2"></i> Descargar Cruces (.xlsx)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="p-4 rounded border border-secondary h-100 d-flex flex-column justify-content-between" style="background: #0D111A;">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="fw-bold text-white mb-0">Bitácora Forense de Auditoría</h6>
+                                            <i class="fas fa-file-excel text-info fa-2x"></i>
+                                        </div>
+                                        <p class="small text-muted mb-3">
+                                            Registro forense completo con segundo exacto, operador que intentó el registro, propietario original y confirmación WhatsApp.
+                                        </p>
+                                    </div>
+                                    <button class="btn btn-outline-info fw-bold w-100" onclick="exportarSuperadminExcel('tabla-auditoria-intentos', 'Auditoria_Forense_Intentos')">
+                                        <i class="fas fa-download me-2"></i> Descargar Bitácora (.xlsx)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="p-4 rounded border border-secondary h-100 d-flex flex-column justify-content-between" style="background: #0D111A;">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="fw-bold text-white mb-0">Rendimiento por Líder Territorial</h6>
+                                            <i class="fas fa-file-excel text-warning fa-2x"></i>
+                                        </div>
+                                        <p class="small text-muted mb-3">
+                                            Resumen de efectividad: votantes registrados por cada líder, votos confirmados en urnas el Día D y porcentaje de conversión.
+                                        </p>
+                                    </div>
+                                    <button class="btn btn-warning text-dark fw-bold w-100" onclick="exportarSuperadminExcel('tabla-ranking-lideres', 'Rendimiento_Lideres_Territoriales')">
+                                        <i class="fas fa-download me-2"></i> Descargar Ranking (.xlsx)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 13: PUESTO Y CENSO OFICIAL RNEC -->
+                <div class="tab-pane fade" id="war-tab-censo">
+                    <div class="step-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                            <div>
+                                <h5 class="fw-bold mb-0 text-white">
+                                    <i class="fas fa-id-card text-pink me-2" style="color: #EC4899;"></i> Consulta de Puesto & Censo Electoral Oficial (RNEC)
+                                </h5>
+                                <small class="text-muted" style="color: #94A3B8 !important;">Consulte de inmediato el lugar de votación, mesa y estado electoral de cualquier ciudadano en Colombia.</small>
+                            </div>
+                        </div>
+
+                        <div class="row justify-content-center">
+                            <div class="col-lg-8">
+                                <div class="p-4 rounded mb-4" style="background: #0D111A; border: 1.5px solid #2D3548;">
+                                    <label class="fw-bold text-white small mb-2">Número de Cédula de Ciudadanía:</label>
+                                    <div class="input-group input-group-lg mb-3">
+                                        <span class="input-group-text bg-dark border-secondary" style="color: #EC4899;"><i class="fas fa-id-card"></i></span>
+                                        <input type="number" id="txt-tab-censo-cedula" class="form-control text-white fw-bold" style="background: #131722; border-color: #2D3548;" placeholder="Digite el número de cédula..." onkeydown="if(event.key==='Enter') consultarCensoDesdeTab()">
+                                        <button class="btn btn-primary fw-bold px-4" onclick="consultarCensoDesdeTab()">
+                                            <i class="fas fa-search me-1"></i> Consultar Censo
+                                        </button>
+                                    </div>
+
+                                    <!-- Resultado de la Consulta -->
+                                    <div id="box-resultado-tab-censo" style="display: none;" class="p-4 rounded border border-secondary" style="background: #080B12;">
+                                        <!-- Inyectado dinámicamente -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL PARA RESTABLECER CONTRASEÑA (EXCLUSIVO SUPERADMINISTRADOR) -->
+    <div class="modal fade" id="modal-restablecer-pass" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: #131722; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 16px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.75);">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white fw-bold">
+                        <i class="fas fa-key text-danger me-2"></i> Restablecer Contraseña de Usuario
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-info py-2 small mb-3" style="background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.3); color: #93C5FD;">
+                        <i class="fas fa-user-shield me-1"></i> Como Superadministrador, usted define la nueva clave de acceso para este usuario.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="small text-muted fw-bold">Usuario a Modificar:</label>
+                        <div class="fw-bold text-white fs-5" id="lbl-reset-nombre">-</div>
+                        <small class="text-info fw-bold" id="lbl-reset-username">@-</small>
+                    </div>
+
+                    <input type="hidden" id="txt-reset-user-id">
+
+                    <div class="mb-3">
+                        <label class="small text-white fw-bold mb-1">Nueva Contraseña de Acceso *</label>
+                        <div class="input-group">
+                            <input type="text" id="txt-reset-nueva-pass" class="form-control fw-bold text-white" style="background: #151924; border-color: #2D3548;" placeholder="Escriba la nueva contraseña..." required>
+                            <button class="btn btn-outline-info fw-bold" type="button" onclick="generarPasswordAleatoria()" title="Generar clave aleatoria">
+                                <i class="fas fa-random me-1"></i> Generar
+                            </button>
+                        </div>
+                        <small class="text-muted" style="font-size: 0.75rem;">Mínimo 4 caracteres. Puede digitar una clave manual o presionar 'Generar'.</small>
+                    </div>
+
+                    <!-- Resultado de éxito para copiar credenciales -->
+                    <div id="box-resultado-credenciales" style="display: none;" class="p-3 rounded mt-3 bg-dark border border-success">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-success fw-bold small"><i class="fas fa-check-circle me-1"></i> ¡Contraseña Actualizada!</span>
+                            <button type="button" class="btn btn-sm btn-outline-success py-0 px-2 fw-bold" onclick="copiarCredencialesGeneradas()">
+                                <i class="fas fa-copy me-1"></i> Copiar para WhatsApp
+                            </button>
+                        </div>
+                        <div id="txt-credenciales-copiar" class="text-white small font-monospace mt-2 p-2 rounded" style="background: #090E17;"></div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" id="btn-confirmar-reset-pass" class="btn btn-primary fw-bold" onclick="guardarNuevaPasswordUsuario()">
+                        <i class="fas fa-save me-1"></i> Guardar Nueva Contraseña
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA CONFIGURAR WHATSAPP DE ALERTAS (CANDIDATOS Y LÍDERES) -->
+    <div class="modal fade" id="modal-mi-whatsapp" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: #160D12; border: 1.5px solid #10B981; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white fw-bold">
+                        <i class="fab fa-whatsapp text-success me-2"></i> Mi WhatsApp para Alertas de Duplicados
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-success py-2 small mb-3" style="background: rgba(34, 197, 94, 0.15); border-color: rgba(34, 197, 94, 0.3); color: #86EFAC;">
+                        <i class="fas fa-shield-alt me-1"></i> Blindaje Activo: Cuando otro operador intente meter a un votante que tú ya registraste, la alerta se despachará a este WhatsApp.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="small text-white fw-bold mb-1">Número de Celular / WhatsApp *</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary text-success fw-bold">+57</span>
+                            <input type="tel" id="txt-mi-whatsapp-numero" class="form-control fw-bold text-white" style="background: #0B111D; border-color: #22C55E;" placeholder="Ej: 3001234567" maxlength="10" required>
+                        </div>
+                        <small class="text-muted" style="font-size: 0.75rem;">Digite los 10 dígitos de su celular en Colombia.</small>
+                    </div>
+
+                    <div id="box-mi-whatsapp-feedback" style="display: none;" class="p-2 rounded mt-2 small fw-bold"></div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" id="btn-guardar-mi-whatsapp" class="btn btn-success fw-bold" onclick="guardarMiTelefonoWhatsApp()">
+                        <i class="fas fa-save me-1"></i> Guardar Mi WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 1: EVENTOS Y ASISTENCIAS -->
+    <div class="modal fade" id="modal-eventos-agenda" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="background: #131722; border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 18px; box-shadow: 0 20px 45px rgba(0, 0, 0, 0.8);">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white fw-bold">
+                        <i class="fas fa-calendar-alt text-danger me-2"></i> Eventos, Agenda & Control de Asistencias
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="p-3 rounded h-100" style="background: rgba(244, 63, 94, 0.08); border: 1px solid rgba(244, 63, 94, 0.2);">
+                                <h6 class="fw-bold text-white mb-2"><i class="fas fa-plus-circle text-danger me-2"></i> Programar Nuevo Evento</h6>
+                                <div class="mb-2">
+                                    <label class="small text-muted fw-bold">Nombre de la Actividad:</label>
+                                    <input type="text" id="ev-nombre" class="form-control form-control-sm text-white" style="background: #0B0E14; border-color: #2D3548;" placeholder="Ej: Gran Concentración Plaza Principal">
+                                </div>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <label class="small text-muted fw-bold">Fecha:</label>
+                                        <input type="date" id="ev-fecha" class="form-control form-control-sm text-white" style="background: #0B0E14; border-color: #2D3548;">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="small text-muted fw-bold">Hora:</label>
+                                        <input type="time" id="ev-hora" class="form-control form-control-sm text-white" style="background: #0B0E14; border-color: #2D3548;">
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="small text-muted fw-bold">Lugar / Corregimiento:</label>
+                                    <input type="text" id="ev-lugar" class="form-control form-control-sm text-white" style="background: #0B0E14; border-color: #2D3548;" placeholder="Ej: Corregimiento El Porvenir">
+                                </div>
+                                <button class="btn btn-danger btn-sm fw-bold w-100 mt-2" onclick="agregarEventoAgenda()">
+                                    <i class="fas fa-calendar-check me-1"></i> Publicar en Agenda de Campaña
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 rounded h-100" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);">
+                                <h6 class="fw-bold text-white mb-2"><i class="fas fa-clipboard-list text-info me-2"></i> Actividades Programadas</h6>
+                                <div id="lista-eventos-container" style="max-height: 250px; overflow-y: auto;">
+                                    <div class="p-2 mb-2 rounded border border-secondary" style="background: #0D111A;">
+                                        <div class="d-flex justify-content-between">
+                                            <strong class="text-white small">Gran Concentración de Cierre</strong>
+                                            <span class="badge bg-danger">Sábado 17:00</span>
+                                        </div>
+                                        <small class="text-muted d-block">Plaza Principal de San Antero • Meta: 2.500 asistentes</small>
+                                    </div>
+                                    <div class="p-2 mb-2 rounded border border-secondary" style="background: #0D111A;">
+                                        <div class="d-flex justify-content-between">
+                                            <strong class="text-white small">Capacitación de Testigos y Jurados</strong>
+                                            <span class="badge bg-primary">Viernes 09:00</span>
+                                        </div>
+                                        <small class="text-muted d-block">Sede Política Central • 85 testigos convocados</small>
+                                    </div>
+                                    <div class="p-2 rounded border border-secondary" style="background: #0D111A;">
+                                        <div class="d-flex justify-content-between">
+                                            <strong class="text-white small">Encuentro Comunitario El Porvenir</strong>
+                                            <span class="badge bg-success">Jueves 16:30</span>
+                                        </div>
+                                        <small class="text-muted d-block">Polideportivo El Porvenir • Diálogo con líderes</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: CUMPLEAÑOS Y MENSAJERÍA SMS -->
+    <div class="modal fade" id="modal-cumpleanos-sms" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="background: #131722; border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 18px; box-shadow: 0 20px 45px rgba(0, 0, 0, 0.8);">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white fw-bold">
+                        <i class="fas fa-comment-dots text-purple me-2" style="color: #A855F7;"></i> Centro de Mensajería Masiva SMS & Cumpleaños
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="p-3 rounded h-100" style="background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.25);">
+                                <h6 class="fw-bold text-white mb-2"><i class="fas fa-birthday-cake text-purple me-2" style="color: #C084FC;"></i> Automatización de Cumpleaños</h6>
+                                <p class="small text-muted mb-3">
+                                    El sistema detecta a diario a los ciudadanos inscritos en el censo que cumplen años y envía un saludo institucional firmado por el candidato.
+                                </p>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="chk-auto-sms-cumple" checked>
+                                    <label class="form-check-label text-white small fw-bold" for="chk-auto-sms-cumple">
+                                        Envío automático activo (08:00 AM)
+                                    </label>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="small text-muted fw-bold">Plantilla de Felicitación:</label>
+                                    <textarea id="txt-plantilla-cumple" rows="3" class="form-control form-control-sm text-white" style="background: #0B0E14; border-color: #2D3548;">¡Feliz cumpleaños {NOMBRE}! En este día tan especial te enviamos un cálido saludo y los mejores deseos para ti y tu familia. Un fuerte abrazo.</textarea>
+                                </div>
+                                <div class="badge bg-dark border border-secondary text-info p-2 w-100">
+                                    <i class="fas fa-user-clock me-1"></i> Cumpleañeros de hoy detectados: <strong>3 votantes</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="p-3 rounded h-100" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);">
+                                <h6 class="fw-bold text-white mb-2"><i class="fas fa-paper-plane text-info me-2"></i> Envío Masivo de Campaña</h6>
+                                <div class="mb-2">
+                                    <label class="small text-muted fw-bold">Destinatarios:</label>
+                                    <select class="form-select form-select-sm text-white" style="background: #0B0E14; border-color: #2D3548;">
+                                        <option value="TODOS">Todos los Votantes con Celular Registrado</option>
+                                        <option value="LIDERES">Solo Líderes Territoriales</option>
+                                        <option value="PENDIENTES">Votantes Pendientes por Votar (Día D)</option>
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="small text-muted fw-bold">Mensaje SMS (Máx. 160 caracteres):</label>
+                                    <textarea id="txt-mensaje-masivo" rows="3" class="form-control form-control-sm text-white" style="background: #0B0E14; border-color: #2D3548;" maxlength="160" placeholder="Escriba el comunicado oficial..."></textarea>
+                                </div>
+                                <button class="btn btn-primary btn-sm fw-bold w-100 mt-2" onclick="alert('📲 Simulación de envío completada: 420 mensajes SMS despachados exitosamente a través del gateway.')">
+                                    <i class="fas fa-broadcast-tower me-1"></i> Despachar Mensajes SMS
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: MEDIOS, PÁGINAS Y PUBLICACIONES -->
+    <div class="modal fade" id="modal-medios-publicaciones" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="background: #131722; border: 1px solid rgba(251, 146, 60, 0.3); border-radius: 18px; box-shadow: 0 20px 45px rgba(0, 0, 0, 0.8);">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white fw-bold">
+                        <i class="fas fa-newspaper text-warning me-2" style="color: #FB923C;"></i> Centro de Medios, Páginas & Contenidos Oficiales
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-4">
+                        Repositorio centralizado de contenidos institucionales para mantener a los líderes y votantes informados con noticias verídicas de campaña.
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="p-3 rounded border border-secondary text-center h-100" style="background: #0D111A;">
+                                <i class="fas fa-file-pdf fa-2x text-danger mb-2"></i>
+                                <h6 class="text-white fw-bold mb-1">Programa de Gobierno</h6>
+                                <small class="text-muted d-block mb-3">Versión oficial 2026-2029</small>
+                                <button class="btn btn-sm btn-outline-danger w-100" onclick="alert('📄 Abriendo Programa de Gobierno Oficial...')">
+                                    <i class="fas fa-download me-1"></i> Ver PDF
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 rounded border border-secondary text-center h-100" style="background: #0D111A;">
+                                <i class="fas fa-images fa-2x text-warning mb-2" style="color: #F59E0B;"></i>
+                                <h6 class="text-white fw-bold mb-1">Kit Gráfico para Redes</h6>
+                                <small class="text-muted d-block mb-3">Logos, piezas y estados</small>
+                                <button class="btn btn-sm btn-outline-warning w-100" onclick="alert('🎨 Descargando pack de piezas gráficas para WhatsApp y Facebook...')">
+                                    <i class="fas fa-download me-1"></i> Descargar Kit
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 rounded border border-secondary text-center h-100" style="background: #0D111A;">
+                                <i class="fas fa-bullhorn fa-2x text-info mb-2"></i>
+                                <h6 class="text-white fw-bold mb-1">Boletines de Prensa</h6>
+                                <small class="text-muted d-block mb-3">Comunicados a medios</small>
+                                <button class="btn btn-sm btn-outline-info w-100" onclick="alert('📰 Visualizando últimos boletines de prensa de campaña...')">
+                                    <i class="fas fa-external-link-alt me-1"></i> Ver Boletines
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: INFORMES Y REPORTES EXPORTABLES -->
+    <div class="modal fade" id="modal-informes-exportables" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content" style="background: #131722; border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 18px; box-shadow: 0 20px 45px rgba(0, 0, 0, 0.8);">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white fw-bold">
+                        <i class="fas fa-file-excel text-success me-2"></i> Centro de Exportación de Informes
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-3">
+                        Descargue reportes estructurados compatibles con Excel y herramientas de BI con un solo clic:
+                    </p>
+                    <div class="d-flex flex-column gap-2">
+                        <button class="btn btn-outline-light text-start p-3 rounded d-flex align-items-center justify-content-between" onclick="exportarSuperadminExcel('tabla-padron-general', 'Padron_Nacional_Consolidado')">
+                            <div>
+                                <strong class="d-block text-white">Padrón Electoral Consolidado</strong>
+                                <small class="text-muted">Todos los votantes, candidatos y puestos</small>
+                            </div>
+                            <i class="fas fa-file-excel text-success fa-lg"></i>
+                        </button>
+                        <button class="btn btn-outline-light text-start p-3 rounded d-flex align-items-center justify-content-between" onclick="exportarSuperadminExcel('tabla-cruces-globales', 'Cruces_Interpartidistas_Día_D')">
+                            <div>
+                                <strong class="d-block text-white">Cruces e Inconsistencias Interpartidistas</strong>
+                                <small class="text-muted">Votantes en disputa y alertas detectadas</small>
+                            </div>
+                            <i class="fas fa-file-excel text-danger fa-lg"></i>
+                        </button>
+                        <button class="btn btn-outline-light text-start p-3 rounded d-flex align-items-center justify-content-between" onclick="exportarSuperadminExcel('tabla-auditoria-intentos', 'Auditoria_Forense_Intentos')">
+                            <div>
+                                <strong class="d-block text-white">Bitácora Forense de Auditoría</strong>
+                                <small class="text-muted">Intentos de fraude con hora exacta y WhatsApp</small>
+                            </div>
+                            <i class="fas fa-file-excel text-info fa-lg"></i>
+                        </button>
+                        <button class="btn btn-outline-light text-start p-3 rounded d-flex align-items-center justify-content-between" onclick="exportarSuperadminExcel('tabla-ranking-lideres', 'Rendimiento_Lideres_Territoriales')">
+                            <div>
+                                <strong class="d-block text-white">Ranking de Rendimiento por Líder</strong>
+                                <small class="text-muted">Totales inscritos, metas y votación Día D</small>
+                            </div>
+                            <i class="fas fa-file-excel text-warning fa-lg"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: CONSULTA PUESTO Y CENSO RNEC POR CÉDULA -->
+    <div class="modal fade" id="modal-puesto-censo-superadmin" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: #131722; border: 1px solid rgba(236, 72, 153, 0.3); border-radius: 18px; box-shadow: 0 20px 45px rgba(0, 0, 0, 0.8);">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white fw-bold">
+                        <i class="fas fa-id-card text-pink me-2" style="color: #EC4899;"></i> Consulta de Puesto & Censo RNEC
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <label class="small text-white fw-bold mb-1">Cédula de Ciudadanía:</label>
+                    <div class="input-group mb-3">
+                        <input type="number" id="txt-censo-rapido-cedula" class="form-control text-white fw-bold" style="background: #0B0E14; border-color: #2D3548;" placeholder="Ej: 1063123456" onkeydown="if(event.key==='Enter') consultarCensoRapidoSuperadmin()">
+                        <button class="btn btn-primary fw-bold" onclick="consultarCensoRapidoSuperadmin()">
+                            <i class="fas fa-search me-1"></i> Consultar
+                        </button>
+                    </div>
+                    
+                    <div id="resultado-censo-rapido" style="display: none;" class="p-3 rounded border border-secondary" style="background: #090D15;">
+                        <h6 class="text-white fw-bold mb-2" id="censo-res-nombre">-</h6>
+                        <div class="small text-light mb-1"><strong>Puesto:</strong> <span id="censo-res-puesto">-</span></div>
+                        <div class="small text-light mb-1"><strong>Mesa:</strong> <span class="badge bg-primary" id="censo-res-mesa">-</span></div>
+                        <div class="small text-light mb-1"><strong>Municipio:</strong> <span id="censo-res-mpio">San Antero, Córdoba</span></div>
+                        <div class="mt-2 pt-2 border-top border-secondary small" id="censo-res-estado-campana"></div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 6: GUÍA DE INSTALACIÓN APP MÓVIL CIVIS (PWA) -->
+    <div class="modal fade" id="modal-guia-app-pwa" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: #131722; border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 18px; box-shadow: 0 20px 45px rgba(0, 0, 0, 0.85);">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white fw-bold">
+                        <i class="fas fa-mobile-alt text-warning me-2"></i> Instalación de la App Móvil Civis (PWA)
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-warning py-2 small mb-3" style="background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.3); color: #FDE68A;">
+                        <i class="fas fa-info-circle me-1"></i> La aplicación móvil <strong>Civis</strong> está optimizada como <strong>Progressive Web App (PWA)</strong>. No requiere descarga desde tiendas de aplicaciones.
+                    </div>
+                    <h6 class="fw-bold text-white mb-2"><i class="fab fa-android text-success me-2"></i> En teléfonos Android (Google Chrome):</h6>
+                    <ol class="small text-light mb-3 ps-3">
+                        <li>Abra el sistema <strong>Civis</strong> en el navegador Chrome de su celular.</li>
+                        <li>Toque el botón de los 3 puntos en la esquina superior derecha.</li>
+                        <li>Seleccione <strong>"Instalar aplicación"</strong> o <strong>"Agregar a la pantalla principal"</strong>.</li>
+                    </ol>
+
+                    <h6 class="fw-bold text-white mb-2"><i class="fab fa-apple text-light me-2"></i> En iPhone / iPad (Safari):</h6>
+                    <ol class="small text-light mb-0 ps-3">
+                        <li>Abra la plataforma <strong>Civis</strong> en el navegador Safari.</li>
+                        <li>Toque el botón de <strong>Compartir</strong> (cuadrado con flecha hacia arriba).</li>
+                        <li>Desplace hacia abajo y elija <strong>"Agregar al inicio"</strong>.</li>
+                    </ol>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-warning text-dark fw-bold" data-bs-dismiss="modal">Entendido</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts Esenciales -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script src="js/api.js?v=3.2"></script>
+    <script src="js/lider.js?v=3.2"></script>
+    <script src="js/superadmin.js?v=3.2"></script>
+    <script src="js/app.js?v=3.2"></script>
+
+    <script>
+        function togglePasswordVisibility() {
+            const pwdInput = document.getElementById('login-password');
+            const eyeIcon = document.getElementById('icon-eye-pwd');
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                eyeIcon.className = 'fas fa-eye-slash text-info';
+            } else {
+                pwdInput.type = 'password';
+                eyeIcon.className = 'fas fa-eye';
+            }
+        }
+
+        function seleccionarPerfilDemo(username, password, nombre) {
+            document.getElementById('login-username').value = username;
+            document.getElementById('login-password').value = password;
+            
+            const btn = document.querySelector('.btn-login-super');
+            btn.innerHTML = `<i class="fas fa-arrow-right me-2"></i> Ingresar como ${nombre}`;
+            setTimeout(() => {
+                btn.innerHTML = `<i class="fas fa-shield-alt me-2"></i> Acceder al Centro de Control`;
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

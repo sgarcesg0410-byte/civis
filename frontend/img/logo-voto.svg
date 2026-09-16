@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <!-- Gradiente de la Urna Electoral en Rojo Liberal Intenso (#CC0000) -->
+    <linearGradient id="urnRedGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E52323"/>
+      <stop offset="45%" stop-color="#CC0000"/>
+      <stop offset="100%" stop-color="#990000"/>
+    </linearGradient>
+
+    <!-- Gradiente de la Tapa de la Urna -->
+    <linearGradient id="lidRedGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF3B3B"/>
+      <stop offset="50%" stop-color="#E60000"/>
+      <stop offset="100%" stop-color="#B30000"/>
+    </linearGradient>
+
+    <!-- Gradiente del Tarjetón Blanco de Alto Contraste -->
+    <linearGradient id="paperGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F1F5F9"/>
+    </linearGradient>
+
+    <!-- Sombra limpia no invasiva -->
+    <filter id="cleanShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-opacity="0.45" flood-color="#000000"/>
+    </filter>
+  </defs>
+
+  <!-- PAPELETA / TARJETÓN BLANCO LUMINOSO QUE EMERGE DE LA URNA -->
+  <g transform="translate(64, 42) rotate(-6) translate(-64, -42)" filter="url(#cleanShadow)">
+    <!-- Hoja blanca con gran nitidez -->
+    <rect x="42" y="8" width="44" height="58" rx="5" fill="url(#paperGrad)" stroke="#E2E8F0" stroke-width="2"/>
+    
+    <!-- Franja superior institucional del tarjetón en Rojo Liberal -->
+    <rect x="48" y="15" width="32" height="5" rx="2.5" fill="#CC0000"/>
+    
+    <!-- Líneas de datos censo / votante -->
+    <line x1="48" y1="26" x2="78" y2="26" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="48" y1="33" x2="72" y2="33" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round"/>
+    
+    <!-- Casilla de votación marcada -->
+    <rect x="48" y="39" width="32" height="20" rx="3.5" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <!-- Voto marcado: Checkmark firme en Rojo Liberal (#CC0000) -->
+    <path d="M 53 50 L 59 56 L 74 42" fill="none" stroke="#CC0000" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- URNA ELECTORAL: Sólida, Nítida y en Rojo Liberal Oficial -->
+  <!-- Cuerpo de la urna -->
+  <path d="M 22 58 L 29 116 A 5 5 0 0 0 34 121 L 94 121 A 5 5 0 0 0 99 116 L 106 58 Z" fill="url(#urnRedGrad)" stroke="#7A0000" stroke-width="2" filter="url(#cleanShadow)"/>
+  
+  <!-- Bisel de luz superior izquierdo para dar volumen 3D elegante -->
+  <path d="M 25 60 L 31 114 A 3 3 0 0 0 34 117 L 46 117 L 38 60 Z" fill="#FFFFFF" opacity="0.15"/>
+
+  <!-- Tapa superior de la urna -->
+  <rect x="15" y="48" width="98" height="14" rx="5" fill="url(#lidRedGrad)" stroke="rgba(255, 255, 255, 0.4)" stroke-width="1.2" filter="url(#cleanShadow)"/>
+  
+  <!-- Ranura de depósito de votos -->
+  <rect x="36" y="53" width="56" height="4.5" rx="2.25" fill="#0A0D14"/>
+
+  <!-- MEDALLÓN BLANCO FRONTAL DE ALTO IMPACTO CON ESTRELLA ROJA -->
+  <circle cx="64" cy="89" r="15" fill="#FFFFFF" stroke="#880000" stroke-width="2" filter="url(#cleanShadow)"/>
+  <circle cx="64" cy="89" r="11.5" fill="#CC0000"/>
+  <!-- Estrella blanca central -->
+  <path d="M 64 81 L 66.8 86.6 L 73 87.2 L 68.5 91.5 L 69.8 97.6 L 64 94.5 L 58.2 97.6 L 59.5 91.5 L 55 87.2 L 61.2 86.6 Z" fill="#FFFFFF"/>
+</svg>
