@@ -23,6 +23,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/health")
+def healthcheck():
+    return {"status": "ok", "app": "civis"}
+
 # Inicializar Base de Datos y Bus Redis al arrancar
 @app.on_event("startup")
 async def on_startup():
