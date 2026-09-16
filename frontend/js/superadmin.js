@@ -1229,6 +1229,167 @@ async function consultarCensoDesdeTab() {
     }
 }
 
+// ==============================================================================
+// 17. CONTROL DE ACCESO EN PUERTA & ASISTENCIA REAL A EVENTOS
+// ==============================================================================
+let eventoActivoCheckin = {
+    nombre: 'Gran Concentración de Cierre',
+    meta: 2500,
+    convocados: 1840,
+    asistieron: 1620,
+    idRef: '1',
+    asistentes: [
+        { hora: '16:15:20', cedula: '1063165499', nombre: 'Sebastián Martínez Gómez', lider: 'Rosaura Benítez (Liberal)', zona: 'Cabecera Municipal', verificado: 'CERTIFICADO EN PUERTA' },
+        { hora: '16:22:45', cedula: '1002345678', nombre: 'Pedro Antonio Martínez', lider: 'Carlos Meza (Conservador)', zona: 'El Porvenir', verificado: 'CERTIFICADO EN PUERTA' },
+        { hora: '16:30:10', cedula: '1003456789', nombre: 'Luis Fernando Morales', lider: 'Rosaura Benítez (Liberal)', zona: 'Santa Rosa del Volcán', verificado: 'CERTIFICADO EN PUERTA' },
+        { hora: '16:38:50', cedula: '1007445566', nombre: 'Rosa Elena Duque Herrera', lider: 'Manuel Pacheco (La U)', zona: 'El Porvenir', verificado: 'CERTIFICADO EN PUERTA' },
+        { hora: '16:45:12', cedula: '1003987654', nombre: 'Ana Milena Suárez Vargas', lider: 'Rosaura Benítez (Liberal)', zona: 'El Bijao', verificado: 'CERTIFICADO EN PUERTA' }
+    ],
+    lideresRendimiento: [
+        { lider: 'Rosaura Benítez', partido: 'Partido Liberal', convocados: 650, asistieron: 590, pct: 91, status: 'Sobresaliente' },
+        { lider: 'Carlos Meza', partido: 'Partido Conservador', convocados: 520, asistieron: 440, pct: 85, status: 'Efectivo' },
+        { lider: 'Manuel Pacheco', partido: 'Partido de la U', convocados: 410, asistieron: 360, pct: 88, status: 'Efectivo' },
+        { lider: 'Dairo Peñata', partido: 'Comando Independiente', convocados: 260, asistieron: 230, pct: 88, status: 'Efectivo' }
+    ]
+};
 
+function abrirControlAsistenciaEvento(nombre, meta, convocados, asistieron, idRef) {
+    eventoActivoCheckin.nombre = nombre;
+    eventoActivoCheckin.meta = meta;
+    eventoActivoCheckin.convocados = convocados;
+    eventoActivoCheckin.asistieron = asistieron;
+    eventoActivoCheckin.idRef = idRef;
 
+    document.getElementById('modal-ev-puerta-nombre').innerText = nombre;
+    document.getElementById('modal-ev-kpi-meta').innerText = meta.toLocaleString();
+    document.getElementById('modal-ev-kpi-convocados').innerText = convocados.toLocaleString();
+    document.getElementById('modal-ev-kpi-asistieron').innerText = asistieron.toLocaleString();
+    const pct = Math.round((asistieron / convocados) * 100);
+    document.getElementById('modal-ev-kpi-porcentaje').innerText = `${pct}%`;
+    document.getElementById('lbl-total-asistentes-lista').innerText = asistieron.toLocaleString();
 
+    renderizarListasCheckin();
+
+    const modalEl = document.getElementById('modal-control-asistencia-puerta');
+    if (modalEl) {
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        setTimeout(() => {
+            document.getElementById('txt-checkin-cedula')?.focus();
+        }, 400);
+    }
+}
+
+function renderizarListasCheckin() {
+    const tbody = document.getElementById('tbody-checkin-asistentes');
+    if (tbody) {
+        tbody.innerHTML = eventoActivoCheckin.asistentes.map(a => `
+            <tr>
+                <td><span class="badge bg-secondary">${a.hora}</span></td>
+                <td><strong class="text-white">${a.cedula}</strong></td>
+                <td><span class="text-white">${a.nombre}</span></td>
+                <td><span class="text-info">${a.lider}</span></td>
+                <td>${a.zona}</td>
+                <td><span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> ${a.verificado}</span></td>
+            </tr>
+        `).join('');
+    }
+
+    const tbodyLid = document.getElementById('tbody-rendimiento-lideres-evento');
+    if (tbodyLid) {
+        tbodyLid.innerHTML = eventoActivoCheckin.lideresRendimiento.map(l => `
+            <tr>
+                <td><strong class="text-white">${l.lider}</strong></td>
+                <td><span class="badge bg-danger">${l.partido}</span></td>
+                <td>${l.convocados} confirmados</td>
+                <td><strong class="text-success">${l.asistieron} en sitio</strong></td>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="progress w-100" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: ${l.pct}%"></div>
+                        </div>
+                        <span class="small fw-bold text-white">${l.pct}%</span>
+                    </div>
+                </td>
+                <td><span class="badge bg-success">${l.status}</span></td>
+            </tr>
+        `).join('');
+    }
+}
+
+async function registrarAsistenciaEnPuerta() {
+    const txt = document.getElementById('txt-checkin-cedula');
+    const boxFeedback = document.getElementById('box-feedback-checkin');
+    const cedula = txt?.value.trim();
+
+    if (!cedula || cedula.length < 5) {
+        alert("Por favor digite o escanee una cédula válida.");
+        txt?.focus();
+        return;
+    }
+
+    // Verificar si ya ingresó
+    const yaIngreso = eventoActivoCheckin.asistentes.find(a => a.cedula === cedula);
+    if (yaIngreso) {
+        if (boxFeedback) {
+            boxFeedback.style.display = 'block';
+            boxFeedback.className = 'mt-2 p-2 rounded small fw-bold alert alert-warning';
+            boxFeedback.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i> <strong>Cédula ya registrada:</strong> ${yaIngreso.nombre} ingresó previamente a las <strong>${yaIngreso.hora}</strong>.`;
+        }
+        txt.value = '';
+        txt.focus();
+        return;
+    }
+
+    // Buscar en censo / padrón
+    let votanteNombre = `Ciudadano C.C. ${cedula}`;
+    let liderResponsable = 'Asistencia Espontánea / Puerta';
+    let barrioZona = 'San Antero';
+
+    try {
+        const res = await ElectoralAPI.consultarCenso(cedula);
+        if (res && res.datos) {
+            votanteNombre = `${res.datos.nombres || ''} ${res.datos.apellidos || ''}`.trim() || votanteNombre;
+            barrioZona = res.datos.puesto_votacion || barrioZona;
+        }
+    } catch (e) {
+        // Modo offline
+    }
+
+    const ahora = new Date();
+    const horaStr = ahora.toTimeString().split(' ')[0];
+
+    const nuevoAsistente = {
+        hora: horaStr,
+        cedula: cedula,
+        nombre: votanteNombre,
+        lider: liderResponsable,
+        zona: barrioZona,
+        verificado: 'REGISTRADO EN PUERTA'
+    };
+
+    eventoActivoCheckin.asistentes.unshift(nuevoAsistente);
+    eventoActivoCheckin.asistieron++;
+
+    // Actualizar KPIs
+    document.getElementById('modal-ev-kpi-asistieron').innerText = eventoActivoCheckin.asistieron.toLocaleString();
+    const nuevoPct = Math.round((eventoActivoCheckin.asistieron / eventoActivoCheckin.convocados) * 100);
+    document.getElementById('modal-ev-kpi-porcentaje').innerText = `${nuevoPct}%`;
+    document.getElementById('lbl-total-asistentes-lista').innerText = eventoActivoCheckin.asistieron.toLocaleString();
+
+    // Actualizar badge en la tabla principal
+    const badgePrincipal = document.getElementById(`badge-asist-real-${eventoActivoCheckin.idRef}`);
+    if (badgePrincipal) {
+        badgePrincipal.innerHTML = `<i class="fas fa-check-double me-1"></i> ${eventoActivoCheckin.asistieron.toLocaleString()} presentes (${nuevoPct}%)`;
+    }
+
+    renderizarListasCheckin();
+
+    if (boxFeedback) {
+        boxFeedback.style.display = 'block';
+        boxFeedback.className = 'mt-2 p-2 rounded small fw-bold alert alert-success';
+        boxFeedback.innerHTML = `<i class="fas fa-check-double me-1"></i> <strong>¡ENTRADA VERIFICADA!</strong> Bienvenido(a) <strong>${votanteNombre}</strong> | Hora: ${horaStr}`;
+    }
+
+    txt.value = '';
+    txt.focus();
+}

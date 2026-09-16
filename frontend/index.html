@@ -1249,34 +1249,54 @@
                                                 <th>Fecha & Hora</th>
                                                 <th>Lugar</th>
                                                 <th>Meta</th>
-                                                <th>Confirmados</th>
+                                                <th>Convocados</th>
+                                                <th>Asistieron en Realidad</th>
                                                 <th>Estado</th>
+                                                <th>Acción en Puerta</th>
                                             </tr>
                                         </thead>
                                         <tbody id="tbody-eventos-tab">
-                                            <tr>
+                                            <tr id="row-evento-cierre">
                                                 <td><strong class="text-white">Gran Concentración de Cierre</strong></td>
                                                 <td><span class="badge bg-danger">Sábado 17:00</span></td>
                                                 <td>Plaza Principal San Antero</td>
-                                                <td>2.500 personas</td>
-                                                <td><span class="badge bg-success">1.840 confirmados</span></td>
-                                                <td><span class="badge bg-primary">En Convocatoria</span></td>
+                                                <td>2.500</td>
+                                                <td><span class="badge bg-secondary">1.840 convocados</span></td>
+                                                <td><span class="badge bg-success" id="badge-asist-real-1"><i class="fas fa-check-double me-1"></i> 1.620 presentes (88%)</span></td>
+                                                <td><span class="badge bg-primary">En Desarrollo</span></td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-warning text-dark fw-bold px-3" onclick="abrirControlAsistenciaEvento('Gran Concentración de Cierre', 2500, 1840, 1620, '1')">
+                                                        <i class="fas fa-qrcode me-1"></i> Control de Puerta
+                                                    </button>
+                                                </td>
                                             </tr>
-                                            <tr>
+                                            <tr id="row-evento-testigos">
                                                 <td><strong class="text-white">Capacitación de Testigos y Jurados</strong></td>
                                                 <td><span class="badge bg-info">Viernes 09:00</span></td>
                                                 <td>Sede Central Campaña</td>
-                                                <td>120 personas</td>
-                                                <td><span class="badge bg-success">98 confirmados</span></td>
-                                                <td><span class="badge bg-warning text-dark">Confirmado</span></td>
+                                                <td>120</td>
+                                                <td><span class="badge bg-secondary">98 convocados</span></td>
+                                                <td><span class="badge bg-success" id="badge-asist-real-2"><i class="fas fa-check-double me-1"></i> 95 presentes (97%)</span></td>
+                                                <td><span class="badge bg-success">Realizado</span></td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-warning fw-bold px-3" onclick="abrirControlAsistenciaEvento('Capacitación de Testigos y Jurados', 120, 98, 95, '2')">
+                                                        <i class="fas fa-id-badge me-1"></i> Ver Lista Puerta
+                                                    </button>
+                                                </td>
                                             </tr>
-                                            <tr>
+                                            <tr id="row-evento-porvenir">
                                                 <td><strong class="text-white">Encuentro Comunitario El Porvenir</strong></td>
                                                 <td><span class="badge bg-secondary">Jueves 16:30</span></td>
                                                 <td>Polideportivo El Porvenir</td>
-                                                <td>350 personas</td>
-                                                <td><span class="badge bg-success">310 confirmados</span></td>
+                                                <td>350</td>
+                                                <td><span class="badge bg-secondary">310 convocados</span></td>
+                                                <td><span class="badge bg-success" id="badge-asist-real-3"><i class="fas fa-check-double me-1"></i> 290 presentes (94%)</span></td>
                                                 <td><span class="badge bg-success">Realizado</span></td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-warning fw-bold px-3" onclick="abrirControlAsistenciaEvento('Encuentro Comunitario El Porvenir', 350, 310, 290, '3')">
+                                                        <i class="fas fa-id-badge me-1"></i> Ver Lista Puerta
+                                                    </button>
+                                                </td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -1953,6 +1973,134 @@
         </div>
     </div>
 
+    <!-- MODAL 7: CONTROL DE ACCESO EN PUERTA & ASISTENCIA REAL A EVENTOS -->
+    <div class="modal fade" id="modal-control-asistencia-puerta" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content" style="background: #11141D; border: 1.5px solid rgba(234, 179, 8, 0.4); border-radius: 20px; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.9);">
+                <div class="modal-header border-secondary py-3">
+                    <div>
+                        <h5 class="modal-title text-white fw-bold mb-0">
+                            <i class="fas fa-qrcode text-warning me-2"></i> Control de Entrada en Puerta & Asistencia Verificada
+                            <span class="badge bg-danger ms-2" id="modal-ev-puerta-nombre">Evento</span>
+                        </h5>
+                        <small class="text-muted">Registro biométrico/cédula al ingreso físico para certificar quiénes asistieron realmente.</small>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <!-- 4 Tarjetas de Métricas de Asistencia Real -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 rounded text-center" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1);">
+                                <div class="fs-4 fw-bold text-white" id="modal-ev-kpi-meta">2.500</div>
+                                <small class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem;">Meta de Aforo</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 rounded text-center" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3);">
+                                <div class="fs-4 fw-bold text-info" id="modal-ev-kpi-convocados">1.840</div>
+                                <small class="text-info text-uppercase fw-bold" style="font-size: 0.72rem;">Convocados Previos</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 rounded text-center" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4);">
+                                <div class="fs-4 fw-bold text-success" id="modal-ev-kpi-asistieron">1.620</div>
+                                <small class="text-success text-uppercase fw-bold" style="font-size: 0.72rem;">Presentes en Sitio (Real)</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 rounded text-center" style="background: rgba(234, 179, 8, 0.15); border: 1px solid rgba(234, 179, 8, 0.4);">
+                                <div class="fs-4 fw-bold text-warning" id="modal-ev-kpi-porcentaje">88%</div>
+                                <small class="text-warning text-uppercase fw-bold" style="font-size: 0.72rem;">Efectividad Convocatoria</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Escáner / Entrada Rápida de Cédula en Puerta -->
+                    <div class="p-3 rounded mb-4" style="background: rgba(234, 179, 8, 0.08); border: 1.5px dashed rgba(234, 179, 8, 0.4);">
+                        <label class="fw-bold text-white small mb-1">
+                            <i class="fas fa-barcode text-warning me-1"></i> Digitar o Escanear Cédula del Asistente al Ingresar:
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary text-warning"><i class="fas fa-id-card"></i></span>
+                            <input type="number" id="txt-checkin-cedula" class="form-control text-white fw-bold fs-5" style="background: #0B0E14; border-color: #2D3548;" placeholder="Ej: 1063165499 (Presione Enter o Registrar)" onkeydown="if(event.key==='Enter') registrarAsistenciaEnPuerta()">
+                            <button class="btn btn-warning text-dark fw-bold px-4" onclick="registrarAsistenciaEnPuerta()">
+                                <i class="fas fa-check-circle me-1"></i> Registrar Entrada
+                            </button>
+                        </div>
+                        <div id="box-feedback-checkin" class="mt-2 p-2 rounded small fw-bold" style="display: none;"></div>
+                    </div>
+
+                    <!-- Pestañas internas: Asistentes en Vivo vs Rendimiento por Líder -->
+                    <ul class="nav nav-tabs border-secondary mb-3">
+                        <li class="nav-item">
+                            <button class="nav-link active fw-bold text-white" data-bs-toggle="tab" data-bs-target="#tab-inner-asistentes">
+                                <i class="fas fa-users text-success me-1"></i> Asistentes Verificados en Sitio (<span id="lbl-total-asistentes-lista">1620</span>)
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link fw-bold text-white" data-bs-toggle="tab" data-bs-target="#tab-inner-lideres">
+                                <i class="fas fa-trophy text-warning me-1"></i> Asistencias por Líder Convocante
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <!-- TAB 1: Lista de Asistentes -->
+                        <div class="tab-pane fade show active" id="tab-inner-asistentes">
+                            <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+                                <table class="custom-table table-sm" id="tabla-asistencias-verificadas">
+                                    <thead>
+                                        <tr>
+                                            <th>Hora Ingreso</th>
+                                            <th>Cédula</th>
+                                            <th>Nombre Completo</th>
+                                            <th>Líder Responsable</th>
+                                            <th>Barrio / Corregimiento</th>
+                                            <th>Estado Verificación</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody-checkin-asistentes">
+                                        <!-- Inyectado dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: Rendimiento de Convocatoria por Líder -->
+                        <div class="tab-pane fade" id="tab-inner-lideres">
+                            <div class="table-responsive">
+                                <table class="custom-table table-sm" id="tabla-rendimiento-lideres-evento">
+                                    <thead>
+                                        <tr>
+                                            <th>Líder Territorial</th>
+                                            <th>Partido / Campaña</th>
+                                            <th>Convocados</th>
+                                            <th>Asistieron en Realidad</th>
+                                            <th>% Cumplimiento</th>
+                                            <th>Calificación</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody-rendimiento-lideres-evento">
+                                        <!-- Inyectado dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-success fw-bold" onclick="exportarSuperadminExcel('tabla-asistencias-verificadas', 'Asistencia_Real_Verificada_Puerta')">
+                        <i class="fas fa-file-excel me-1"></i> Exportar Lista Oficial en Excel
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts Esenciales -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1960,7 +2108,7 @@
     
     <script src="js/api.js?v=3.2"></script>
     <script src="js/lider.js?v=3.2"></script>
-    <script src="js/superadmin.js?v=3.2"></script>
+    <script src="js/superadmin.js?v=3.3"></script>
     <script src="js/app.js?v=3.2"></script>
 
     <script>
