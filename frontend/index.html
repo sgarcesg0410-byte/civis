@@ -19,8 +19,8 @@
     <link rel="alternate icon" type="image/svg+xml" href="img/logo-voto.svg?v=5">
     <link rel="apple-touch-icon" href="img/favicon.svg?v=5">
     
-    <!-- Hoja de Estilos Ejecutiva v6.0 -->
-    <link rel="stylesheet" href="css/styles.css?v=6.0-DIRECT-TABS">
+    <!-- Hoja de Estilos Ejecutiva v7.0 Enterprise Mission Control -->
+    <link rel="stylesheet" href="css/styles.css?v=7.0-SOBRIO-ENTERPRISE">
 
     <style>
         /* Estilos críticos para garantizar visualización inmediata de la foto de fondo */
@@ -495,74 +495,74 @@
                 <!-- SECCIÓN 1: PANEL EJECUTIVO -->
                 <div class="sidebar-section-title">Panel Ejecutivo</div>
                 <button type="button" class="nav-link active" data-bs-target="#war-tab-kpis" role="tab" onclick="activarTabSuperadmin('#war-tab-kpis', 'Mando Central & KPIs')">
-                    <i class="fas fa-th-large text-primary"></i>
+                    <i class="fas fa-th-large"></i>
                     <span class="sidebar-text">Mando Central & KPIs</span>
                 </button>
-                <button type="button" class="nav-link" data-bs-target="#war-tab-padron" role="tab" onclick="activarTabSuperadmin('#war-tab-padron', 'Padrón de Votantes'); cargarPadronConsolidado()">
-                    <i class="fas fa-user-friends text-warning"></i>
+                <button type="button" class="nav-link" data-bs-target="#war-tab-padron" role="tab" onclick="activarTabSuperadmin('#war-tab-padron', 'Padrón de Votantes')">
+                    <i class="fas fa-user-friends"></i>
                     <span class="sidebar-text">Padrón de Personas</span>
                 </button>
-                <button type="button" class="nav-link" data-bs-target="#war-tab-mapa" role="tab" onclick="activarTabSuperadmin('#war-tab-mapa', 'Geomapa & Cobertura'); inicializarMapaSuperadmin()">
-                    <i class="fas fa-map-marked-alt text-info"></i>
+                <button type="button" class="nav-link" data-bs-target="#war-tab-mapa" role="tab" onclick="activarTabSuperadmin('#war-tab-mapa', 'Geomapa & Cobertura')">
+                    <i class="fas fa-map-marked-alt"></i>
                     <span class="sidebar-text">Geomapa Territorial</span>
                 </button>
 
                 <!-- SECCIÓN 2: OPERACIONES DE CAMPAÑA -->
                 <div class="sidebar-section-title">Operaciones de Campaña</div>
-                <button type="button" class="nav-link" data-bs-target="#war-tab-cruces" role="tab" onclick="activarTabSuperadmin('#war-tab-cruces', 'Operaciones & Cruces'); cargarCrucesGlobales()">
-                    <i class="fas fa-bolt text-danger"></i>
+                <button type="button" class="nav-link" data-bs-target="#war-tab-cruces" role="tab" onclick="activarTabSuperadmin('#war-tab-cruces', 'Operaciones & Cruces')">
+                    <i class="fas fa-bolt"></i>
                     <span class="sidebar-text">Operaciones & Cruces</span>
                     <span class="badge bg-danger ms-auto sidebar-badge-count" id="badge-cruces-count">0</span>
                 </button>
-                <button type="button" class="nav-link" data-bs-target="#war-tab-ranking" role="tab" onclick="activarTabSuperadmin('#war-tab-ranking', 'Ranking de Líderes'); cargarRankingLideres()">
-                    <i class="fas fa-trophy text-warning"></i>
+                <button type="button" class="nav-link" data-bs-target="#war-tab-ranking" role="tab" onclick="activarTabSuperadmin('#war-tab-ranking', 'Ranking de Líderes')">
+                    <i class="fas fa-trophy"></i>
                     <span class="sidebar-text">Ranking Territorial</span>
                 </button>
                 <button type="button" class="nav-link" data-bs-target="#war-tab-eventos" role="tab" onclick="activarTabSuperadmin('#war-tab-eventos', 'Eventos & Asistencia')">
-                    <i class="fas fa-calendar-check text-success"></i>
+                    <i class="fas fa-calendar-check"></i>
                     <span class="sidebar-text">Eventos & Aforo</span>
                 </button>
-                <button type="button" class="nav-link" data-bs-target="#war-tab-filtro" role="tab" onclick="activarTabSuperadmin('#war-tab-filtro', 'Filtro Dinámico'); inicializarFiltroDinamico()">
-                    <i class="fas fa-filter" style="color: #F97316;"></i>
+                <button type="button" class="nav-link" data-bs-target="#war-tab-filtro" role="tab" onclick="activarTabSuperadmin('#war-tab-filtro', 'Filtro Dinámico')">
+                    <i class="fas fa-filter"></i>
                     <span class="sidebar-text">Filtro Dinámico</span>
                 </button>
                 <button type="button" class="nav-link" data-bs-target="#war-tab-censo" role="tab" onclick="activarTabSuperadmin('#war-tab-censo', 'Puestos & Censo RNEC')">
-                    <i class="fas fa-id-card" style="color: #EC4899;"></i>
+                    <i class="fas fa-id-card"></i>
                     <span class="sidebar-text">Puesto & Censo RNEC</span>
                 </button>
                 <button type="button" class="nav-link" data-bs-target="#war-tab-informes" role="tab" onclick="activarTabSuperadmin('#war-tab-informes', 'Informes Ejecutivos')">
-                    <i class="fas fa-chart-line text-warning"></i>
+                    <i class="fas fa-chart-line"></i>
                     <span class="sidebar-text">Informes Ejecutivos</span>
                 </button>
                 <button type="button" class="nav-link" data-bs-target="#war-tab-sms" role="tab" onclick="activarTabSuperadmin('#war-tab-sms', 'Difusión SMS & Cumpleaños')">
-                    <i class="fas fa-sms text-info"></i>
+                    <i class="fas fa-sms"></i>
                     <span class="sidebar-text">Difusión SMS</span>
                 </button>
                 <button type="button" class="nav-link" data-bs-target="#war-tab-medios" role="tab" onclick="activarTabSuperadmin('#war-tab-medios', 'Medios & Monitoreo')">
-                    <i class="fas fa-bullhorn" style="color: #A855F7;"></i>
+                    <i class="fas fa-bullhorn"></i>
                     <span class="sidebar-text">Medios & Noticias</span>
                 </button>
                 <button type="button" class="nav-link" data-bs-target="#war-tab-app-movil" role="tab" onclick="activarTabSuperadmin('#war-tab-app-movil', 'Simulador App Móvil')">
-                    <i class="fas fa-qrcode text-secondary"></i>
+                    <i class="fas fa-qrcode"></i>
                     <span class="sidebar-text">Simulador MRZ Móvil</span>
                 </button>
 
                 <!-- SECCIÓN 3: GOBERNANZA & SEGURIDAD v1.1 -->
                 <div class="sidebar-section-title">Gobernanza & Cumplimiento</div>
-                <button type="button" class="nav-link" data-bs-target="#war-tab-tokens-v11" role="tab" onclick="activarTabSuperadmin('#war-tab-tokens-v11', 'Tokens Móviles v1.1'); cargarTokensTerritoriales()">
-                    <i class="fas fa-mobile-alt text-success"></i>
+                <button type="button" class="nav-link" data-bs-target="#war-tab-tokens-v11" role="tab" onclick="activarTabSuperadmin('#war-tab-tokens-v11', 'Tokens Móviles v1.1')">
+                    <i class="fas fa-mobile-alt"></i>
                     <span class="sidebar-text">Tokens Móviles (Líderes)</span>
                 </button>
-                <button type="button" class="nav-link" data-bs-target="#war-tab-arco-v11" role="tab" onclick="activarTabSuperadmin('#war-tab-arco-v11', 'Habeas Data Ley 1581'); cargarSolicitudesArco()">
-                    <i class="fas fa-balance-scale text-primary"></i>
+                <button type="button" class="nav-link" data-bs-target="#war-tab-arco-v11" role="tab" onclick="activarTabSuperadmin('#war-tab-arco-v11', 'Habeas Data Ley 1581')">
+                    <i class="fas fa-balance-scale"></i>
                     <span class="sidebar-text">Trámites ARCO Ley 1581</span>
                 </button>
-                <button type="button" class="nav-link" data-bs-target="#war-tab-auditoria" role="tab" onclick="activarTabSuperadmin('#war-tab-auditoria', 'Bitácora Forense'); cargarAuditoriaForense()">
-                    <i class="fas fa-shield-alt text-info"></i>
+                <button type="button" class="nav-link" data-bs-target="#war-tab-auditoria" role="tab" onclick="activarTabSuperadmin('#war-tab-auditoria', 'Bitácora Forense')">
+                    <i class="fas fa-shield-alt"></i>
                     <span class="sidebar-text">Bitácora Forense</span>
                 </button>
-                <button type="button" class="nav-link" data-bs-target="#war-tab-equipo" role="tab" onclick="activarTabSuperadmin('#war-tab-equipo', 'Usuarios & Permisos'); cargarGestionUsuarios()">
-                    <i class="fas fa-users-cog" style="color: #C084FC;"></i>
+                <button type="button" class="nav-link" data-bs-target="#war-tab-equipo" role="tab" onclick="activarTabSuperadmin('#war-tab-equipo', 'Usuarios & Permisos')">
+                    <i class="fas fa-users-cog"></i>
                     <span class="sidebar-text">Usuarios & Roles</span>
                 </button>
             </nav>
@@ -599,19 +599,20 @@
                 </div>
 
                 <div class="d-flex align-items-center gap-3">
-                    <div id="live-ws-indicator" class="badge bg-danger px-3 py-2 fw-bold" style="display: none; animation: pulse 2s infinite;">
-                        <i class="fas fa-broadcast-tower me-1"></i> EN VIVO
+                    <div id="live-ws-indicator" class="status-indicator-live" style="display: none;">
+                        <span class="status-dot-pulse"></span>
+                        <span class="status-live-text">OPERATIVO EN VIVO</span>
                     </div>
-                    <div class="d-flex align-items-center gap-2 px-3 py-1 rounded-pill" style="background: #111726; border: 1px solid #1E293B;">
-                        <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center fw-bold" style="width: 30px; height: 30px; font-size: 0.8rem;">
+                    <div class="user-pill-executive">
+                        <div class="user-avatar-dot">
                             <i class="fas fa-user-shield"></i>
                         </div>
-                        <div class="text-start d-none d-sm-block">
-                            <div class="text-white fw-bold" style="font-size: 0.82rem;" id="lbl-admin-nombre">Administrador</div>
-                            <div class="text-muted" style="font-size: 0.68rem;">Propietario del Sistema</div>
+                        <div class="user-info-text d-none d-sm-block">
+                            <span class="user-name" id="lbl-admin-nombre">Administrador</span>
+                            <span class="user-role">Superadmin General</span>
                         </div>
                     </div>
-                    <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold" onclick="cerrarSesion()" title="Cerrar Sesión">
+                    <button class="btn-logout-executive" onclick="cerrarSesion()" title="Cerrar Sesión">
                         <i class="fas fa-sign-out-alt me-1"></i> Salir
                     </button>
                 </div>
@@ -1176,19 +1177,19 @@
                     <div class="step-card">
                         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                             <div>
-                                <h5 class="fw-bold mb-0 text-white">
-                                    <i class="fas fa-trophy text-warning me-2"></i> Ranking & Rendimiento de Líderes Territoriales
+                                <h5 class="fw-bold mb-0 text-white" style="letter-spacing: -0.01em;">
+                                    <i class="fas fa-chart-bar me-2" style="color: #38BDF8;"></i> Rendimiento & Metas Territoriales
                                 </h5>
-                                <small class="text-muted" style="color: #94A3B8 !important;">
-                                    Monitoreo de efectividad en tiempo real: número de votantes inscritos, metas alcanzadas y confirmación en urnas.
+                                <small class="text-muted" style="color: #64748B !important; font-size: 0.78rem;">
+                                    Efectividad operativa por líder territorial: censo inscrito, metas asignadas y validación en urnas.
                                 </small>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <button class="btn btn-sm btn-outline-warning fw-bold" onclick="cargarRankingLideres()">
-                                    <i class="fas fa-sync-alt me-1"></i> Actualizar Ranking
+                                <button class="btn btn-sm btn-secondary px-3" onclick="cargarRankingLideres()">
+                                    <i class="fas fa-sync-alt me-1"></i> Actualizar
                                 </button>
-                                <button class="btn btn-sm btn-outline-success fw-bold" onclick="exportarSuperadminExcel('tabla-ranking-lideres', 'Ranking_Rendimiento_Lideres')">
-                                    <i class="fas fa-file-excel me-1"></i> Exportar
+                                <button class="btn btn-sm btn-outline-secondary px-3" onclick="exportarSuperadminExcel('tabla-ranking-lideres', 'Ranking_Rendimiento_Lideres')">
+                                    <i class="fas fa-download me-1"></i> Exportar
                                 </button>
                             </div>
                         </div>
@@ -2515,10 +2516,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <script src="js/api.js?v=6.0-DIRECT-TABS"></script>
-    <script src="js/lider.js?v=6.0-DIRECT-TABS"></script>
-    <script src="js/superadmin.js?v=6.0-DIRECT-TABS"></script>
-    <script src="js/app.js?v=6.0-DIRECT-TABS"></script>
+    <script src="js/api.js?v=7.0-SOBRIO-ENTERPRISE"></script>
+    <script src="js/lider.js?v=7.0-SOBRIO-ENTERPRISE"></script>
+    <script src="js/superadmin.js?v=7.0-SOBRIO-ENTERPRISE"></script>
+    <script src="js/app.js?v=7.0-SOBRIO-ENTERPRISE"></script>
 
     <script>
         function togglePasswordVisibility() {

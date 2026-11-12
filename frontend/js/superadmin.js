@@ -752,12 +752,40 @@ function activarTabSuperadmin(targetSelector, titulo) {
         actualizarTituloVista(titulo);
     }
 
-    // 6. Si es el mapa, forzar re-render de Leaflet
+    // 6. Carga dinámica e inmediata de datos según el módulo activado
+    try {
+        if (targetSelector === '#war-tab-kpis') {
+            cargarKpisGlobales();
+            cargarCrucesGlobales();
+        } else if (targetSelector === '#war-tab-padron') {
+            cargarPadronConsolidado();
+        } else if (targetSelector === '#war-tab-mapa') {
+            inicializarMapaSuperadmin();
+        } else if (targetSelector === '#war-tab-cruces') {
+            cargarCrucesGlobales();
+        } else if (targetSelector === '#war-tab-ranking') {
+            cargarRankingLideres();
+        } else if (targetSelector === '#war-tab-filtro') {
+            inicializarFiltroDinamico();
+        } else if (targetSelector === '#war-tab-equipo') {
+            cargarGestionUsuarios();
+        } else if (targetSelector === '#war-tab-auditoria') {
+            cargarAuditoriaForense();
+        } else if (targetSelector === '#war-tab-tokens-v11') {
+            cargarTokensTerritoriales();
+        } else if (targetSelector === '#war-tab-arco-v11') {
+            cargarSolicitudesArco();
+        }
+    } catch (errLoader) {
+        console.warn('Alerta al cargar módulo:', targetSelector, errLoader);
+    }
+
+    // 7. Si es el mapa, forzar re-render de Leaflet
     if (targetSelector === '#war-tab-mapa' && typeof mapaGlobal !== 'undefined' && mapaGlobal) {
         setTimeout(() => mapaGlobal.invalidateSize(), 150);
     }
 
-    // 7. Cerrar menú en móviles
+    // 8. Cerrar menú en móviles
     const sidebar = document.getElementById('civisSidebar');
     if (sidebar) sidebar.classList.remove('show-mobile');
 
@@ -895,30 +923,52 @@ async function cargarRankingLideres() {
 
         const ranking = Object.values(lideresMap).sort((a, b) => b.total_inscritos - a.total_inscritos);
 
-        // Renderizar Podio Top 3
+        // Renderizar Podio Top 3 con Cards Ejecutivas Ultracompactas
         if (podioCont) {
             const top3 = ranking.slice(0, 3);
-            const medallas = [
-                { puesto: '1° LUGAR', clase: 'text-warning', icon: 'fa-trophy', bg: 'rgba(234, 179, 8, 0.12)', border: 'rgba(234, 179, 8, 0.4)' },
-                { puesto: '2° LUGAR', clase: 'text-light', icon: 'fa-medal', bg: 'rgba(255, 255, 255, 0.06)', border: 'rgba(255, 255, 255, 0.25)' },
-                { puesto: '3° LUGAR', clase: 'text-warning', icon: 'fa-award', bg: 'rgba(249, 115, 22, 0.12)', border: 'rgba(249, 115, 22, 0.35)' }
-            ];
-
             if (top3.length === 0) {
                 podioCont.innerHTML = `<div class="col-12 text-center text-muted py-3">No hay registros de líderes para conformar el podio.</div>`;
             } else {
-                podioCont.innerHTML = top3.map((l, idx) => `
+                podioCont.innerHTML = top3.map((l, idx) => {
+                    const rankNum = idx + 1;
+                    const rankClass = rankNum === 1 ? 'rank-1' : (rankNum === 2 ? 'rank-2' : 'rank-3');
+                    const rankLabel = rankNum === 1 ? '#01 LÍDER PRINCIPAL' : (rankNum === 2 ? '#02 SEGUNDO LUGAR' : '#03 TERCER LUGAR');
+                    const efec = l.total_inscritos > 0 ? Math.round((l.votos_confirmados / l.total_inscritos) * 100) : 0;
+                    return `
                     <div class="col-md-4">
-                        <div class="p-3 rounded text-center h-100" style="background: ${medallas[idx].bg}; border: 1.5px solid ${medallas[idx].border};">
-                            <i class="fas ${medallas[idx].icon} fa-2x ${medallas[idx].clase} mb-2"></i>
-                            <span class="badge bg-dark border border-secondary ${medallas[idx].clase} d-block mx-auto mb-2 fw-bold" style="width: fit-content;">${medallas[idx].puesto}</span>
-                            <h6 class="fw-bold text-white mb-1">${l.nombre}</h6>
-                            <small class="text-muted d-block mb-2">${l.partido}</small>
-                            <div class="fs-4 fw-bold text-white">${l.total_inscritos} <small class="fs-6 text-muted">votantes</small></div>
-                            <div class="small text-success mt-1"><i class="fas fa-check-circle me-1"></i> ${l.votos_confirmados} votos Día D</div>
+                        <div class="executive-rank-card">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="rank-pill ${rankClass}">${rankLabel}</span>
+                                <span class="d-flex align-items-center gap-1 small" style="color: #94A3B8; font-size: 0.72rem;">
+                                    <span class="rounded-circle" style="width: 7px; height: 7px; background: ${l.color || '#38BDF8'};"></span>
+                                    ${l.partido || 'Campaña'}
+                                </span>
+                            </div>
+                            <div class="my-2">
+                                <h6 class="fw-bold text-white mb-0" style="font-size: 0.95rem;">${l.nombre}</h6>
+                                <small class="text-muted" style="font-size: 0.75rem; color: #64748B !important;">${l.zona || 'Jurisdicción General'} &bull; ${l.candidato || 'General'}</small>
+                            </div>
+                            <div class="pt-2 border-top border-secondary border-opacity-10 mt-2">
+                                <div class="d-flex justify-content-between align-items-end">
+                                    <div>
+                                        <div class="rank-metric-val">${l.total_inscritos.toLocaleString()}</div>
+                                        <div class="rank-metric-lbl">Votantes Inscritos</div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="fs-6 fw-bold" style="color: #34D399; font-variant-numeric: tabular-nums;">
+                                            <i class="fas fa-check-circle me-1 small"></i>${l.votos_confirmados}
+                                        </div>
+                                        <div class="rank-metric-lbl">Día D (${efec}%)</div>
+                                    </div>
+                                </div>
+                                <div class="progress mt-2" style="height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px;">
+                                    <div class="progress-bar bg-success" style="width: ${efec}%;"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                `).join('');
+                    `;
+                }).join('');
             }
         }
 
@@ -931,29 +981,30 @@ async function cargarRankingLideres() {
 
             tbody.innerHTML = ranking.map((l, idx) => {
                 const efec = l.total_inscritos > 0 ? Math.round((l.votos_confirmados / l.total_inscritos) * 100) : 0;
-                let badgePos = '';
-                if (idx === 0) badgePos = '<span class="badge bg-warning text-dark fw-bold px-2 py-1"><i class="fas fa-crown me-1"></i> 1°</span>';
-                else if (idx === 1) badgePos = '<span class="badge bg-secondary text-white fw-bold px-2 py-1">2°</span>';
-                else if (idx === 2) badgePos = '<span class="badge text-white fw-bold px-2 py-1" style="background: #CD7F32;">3°</span>';
-                else badgePos = `<span class="badge bg-dark border border-secondary text-light">${idx + 1}°</span>`;
+                const posPill = `<span class="badge" style="background: rgba(255,255,255,0.05); color: #94A3B8; font-family: monospace; font-size: 0.72rem; border: 1px solid rgba(255,255,255,0.07);">#${String(idx + 1).padStart(2, '0')}</span>`;
 
                 return `
                     <tr>
-                        <td>${badgePos}</td>
+                        <td>${posPill}</td>
                         <td><strong class="text-white">${l.nombre}</strong></td>
-                        <td><small class="text-light">${l.zona}</small></td>
-                        <td>
-                            <span class="badge px-2 py-1 text-white fw-bold" style="background: ${l.color};">${l.partido}</span>
-                            <small class="d-block text-muted">${l.candidato}</small>
-                        </td>
-                        <td><span class="badge bg-primary px-3 py-1 fs-6">${l.total_inscritos}</span></td>
-                        <td><span class="badge bg-success px-2 py-1">${l.votos_confirmados}</span></td>
+                        <td><small style="color: #94A3B8;">${l.zona}</small></td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
-                                <div class="progress flex-grow-1" style="height: 7px; background: rgba(255,255,255,0.1); border-radius: 4px;">
+                                <span class="rounded-circle flex-shrink-0" style="width: 8px; height: 8px; background: ${l.color || '#38BDF8'};"></span>
+                                <div>
+                                    <span class="text-white small fw-bold">${l.partido}</span>
+                                    <small class="d-block" style="color: #64748B; font-size: 0.72rem;">${l.candidato}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="fw-bold text-white fs-6" style="font-variant-numeric: tabular-nums;">${l.total_inscritos.toLocaleString()}</span></td>
+                        <td><span class="fw-bold" style="color: #34D399; font-variant-numeric: tabular-nums;">${l.votos_confirmados.toLocaleString()}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px;">
                                     <div class="progress-bar bg-success" style="width: ${efec}%;"></div>
                                 </div>
-                                <span class="small fw-bold text-white">${efec}%</span>
+                                <span class="small fw-bold text-white" style="font-variant-numeric: tabular-nums; width: 34px; text-align: right;">${efec}%</span>
                             </div>
                         </td>
                     </tr>
