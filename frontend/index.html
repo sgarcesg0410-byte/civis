@@ -472,189 +472,289 @@
     <!-- ==================================================================== -->
     <!-- 3. WAR ROOM EXCLUSIVO PARA SUPERADMINISTRADORES -->
     <!-- ==================================================================== -->
-    <div id="view-superadmin" style="display: none;">
-        <!-- Header Superadmin -->
-        <header class="app-header">
-            <div class="header-brand">
-                <div class="brand-logo-box">
-                    <img src="img/logo-voto.svg?v=3" alt="Logo Votaciones">
+    <div id="view-superadmin" style="display: none;" class="civis-dashboard-root">
+        <!-- 1. BARRA LATERAL (SIDEBAR DE ALTA FIDELIDAD Y NAVEGACIÓN INTUITIVA) -->
+        <aside class="civis-sidebar" id="civisSidebar">
+            <div class="sidebar-brand-box">
+                <div class="d-flex align-items-center gap-2">
+                    <img src="img/logo-voto.svg?v=3" alt="CIVIS" style="width: 28px; height: 28px;">
+                    <div class="sidebar-text">
+                        <div class="fw-bold fs-6 text-white" style="letter-spacing: -0.02em;">CIVIS <span class="badge bg-danger ms-1" style="font-size: 0.65rem;">v1.1</span></div>
+                        <small class="text-muted" style="font-size: 0.7rem;">War Room Nacional</small>
+                    </div>
                 </div>
-                <div>
-                    <h5 class="mb-0 fw-bold text-white"><span style="color: #CC0000;">CIVIS</span> | Centro de Mando Nacional</h5>
-                    <small class="text-muted" style="color: #94A3B8 !important;">Auditoría Inter-Partidista & Control de Fraude Electoral</small>
-                </div>
-            </div>
-            <div class="d-flex align-items-center gap-3">
-                <div id="live-ws-indicator" class="badge bg-danger px-3 py-2 fw-bold" style="display: none; animation: pulse 2s infinite;">
-                    <i class="fas fa-broadcast-tower me-1"></i> EN VIVO
-                </div>
-                <div class="text-end d-none d-md-block">
-                    <div class="fw-bold text-white fs-6" id="lbl-admin-nombre">Sebastián (Administrador General)</div>
-                    <span class="badge-role-tag badge-superadmin-gold"><i class="fas fa-crown me-1"></i> Propietario del Sistema</span>
-                </div>
-                <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold" onclick="cerrarSesion()">
-                    <i class="fas fa-sign-out-alt me-1"></i> Salir
+                <button class="btn btn-sm btn-link text-muted p-0" id="btnToggleSidebar" title="Colapsar / Expandir menú">
+                    <i class="fas fa-bars"></i>
                 </button>
             </div>
-        </header>
 
-        <main class="war-room-container">
-            <!-- PESTAÑAS DE NAVEGACIÓN WAR ROOM (BARRA SUPERIOR COMPLETA CON TODOS LOS MÓDULOS) -->
-            <ul class="nav nav-pills mb-4 gap-2 p-2 rounded-3" style="background: #141418; border: 1.5px solid #282832;">
-                <!-- 0. Tablero General -->
-                <li class="nav-item">
-                    <button class="nav-link active fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-kpis">
-                        <i class="fas fa-th-large me-1"></i> Mando Central & KPIs
+            <nav class="civis-sidebar-nav">
+                <!-- SECCIÓN 1: PANEL EJECUTIVO -->
+                <div class="sidebar-section-title">Panel Ejecutivo</div>
+                <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#war-tab-kpis" onclick="actualizarTituloVista('Mando Central & KPIs')">
+                    <i class="fas fa-th-large text-primary"></i>
+                    <span class="sidebar-text">Mando Central & KPIs</span>
+                </button>
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-padron" onclick="cargarPadronConsolidado(); actualizarTituloVista('Padrón de Votantes')">
+                    <i class="fas fa-user-friends text-warning"></i>
+                    <span class="sidebar-text">Padrón de Personas</span>
+                </button>
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-mapa" onclick="inicializarMapaSuperadmin(); actualizarTituloVista('Geomapa & Cobertura')">
+                    <i class="fas fa-map-marked-alt text-info"></i>
+                    <span class="sidebar-text">Geomapa Territorial</span>
+                </button>
+
+                <!-- SECCIÓN 2: OPERACIONES DE CAMPAÑA -->
+                <div class="sidebar-section-title">Operaciones de Campaña</div>
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-cruces" onclick="cargarCrucesGlobales(); actualizarTituloVista('Operaciones & Cruces')">
+                    <i class="fas fa-bolt text-danger"></i>
+                    <span class="sidebar-text">Operaciones & Cruces</span>
+                    <span class="badge bg-danger ms-auto sidebar-badge-count" id="badge-cruces-count">0</span>
+                </button>
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-ranking" onclick="cargarRankingLideres(); actualizarTituloVista('Ranking de Líderes')">
+                    <i class="fas fa-trophy text-warning"></i>
+                    <span class="sidebar-text">Ranking Territorial</span>
+                </button>
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-eventos" onclick="actualizarTituloVista('Eventos & Asistencia')">
+                    <i class="fas fa-calendar-check text-success"></i>
+                    <span class="sidebar-text">Eventos & Aforo</span>
+                </button>
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-filtro" onclick="inicializarFiltroDinamico(); actualizarTituloVista('Filtro Dinámico')">
+                    <i class="fas fa-filter" style="color: #F97316;"></i>
+                    <span class="sidebar-text">Filtro Dinámico</span>
+                </button>
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-censo" onclick="actualizarTituloVista('Puestos & Censo RNEC')">
+                    <i class="fas fa-id-card" style="color: #EC4899;"></i>
+                    <span class="sidebar-text">Puesto & Censo RNEC</span>
+                </button>
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-informes" onclick="actualizarTituloVista('Informes & Reportes')">
+                    <i class="fas fa-chart-line text-warning"></i>
+                    <span class="sidebar-text">Informes Ejecutivos</span>
+                </button>
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-sms" onclick="actualizarTituloVista('Difusión SMS & Cumpleaños')">
+                    <i class="fas fa-sms text-info"></i>
+                    <span class="sidebar-text">Difusión SMS</span>
+                </button>
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-medios" onclick="actualizarTituloVista('Medios & Monitoreo')">
+                    <i class="fas fa-bullhorn" style="color: #A855F7;"></i>
+                    <span class="sidebar-text">Medios & Noticias</span>
+                </button>
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-app-movil" onclick="actualizarTituloVista('Simulador App Móvil')">
+                    <i class="fas fa-qrcode text-secondary"></i>
+                    <span class="sidebar-text">Simulador MRZ Móvil</span>
+                </button>
+
+                <!-- SECCIÓN 3: GOBERNANZA & SEGURIDAD v1.1 -->
+                <div class="sidebar-section-title">Gobernanza & Cumplimiento</div>
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-tokens-v11" onclick="cargarTokensTerritoriales(); actualizarTituloVista('Tokens Móviles v1.1')">
+                    <i class="fas fa-mobile-alt text-success"></i>
+                    <span class="sidebar-text">Tokens Móviles (Líderes)</span>
+                </button>
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-arco-v11" onclick="cargarSolicitudesArco(); actualizarTituloVista('Habeas Data Ley 1581')">
+                    <i class="fas fa-balance-scale text-primary"></i>
+                    <span class="sidebar-text">Trámites ARCO Ley 1581</span>
+                </button>
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-auditoria" onclick="cargarAuditoriaForense(); actualizarTituloVista('Bitácora Forense')">
+                    <i class="fas fa-shield-alt text-info"></i>
+                    <span class="sidebar-text">Bitácora Forense</span>
+                </button>
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-equipo" onclick="cargarGestionUsuarios(); actualizarTituloVista('Usuarios & Permisos')">
+                    <i class="fas fa-users-cog" style="color: #C084FC;"></i>
+                    <span class="sidebar-text">Usuarios & Roles</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-footer-box">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="badge bg-success" style="width: 8px; height: 8px; padding: 0; border-radius: 50%;"></span>
+                        <strong class="text-white">PostgreSQL Cloud</strong>
+                    </div>
+                    <div class="text-muted small">SSL Forzado &bull; Pool Activo</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 2. MAIN CONTENT WRAPPER -->
+        <div class="civis-main-wrapper">
+            <!-- TOPBAR EJECUTIVO -->
+            <header class="civis-topbar">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-outline-secondary btn-sm d-md-none" id="btnMobileSidebar">
+                        <i class="fas fa-bars"></i>
                     </button>
-                </li>
+                    <div>
+                        <div class="text-muted small" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">CIVIS War Room</div>
+                        <h6 class="mb-0 fw-bold text-white" id="currentViewTitle">Mando Central & KPIs</h6>
+                    </div>
+                </div>
 
-                <!-- 1. Personas -->
-                <li class="nav-item">
-                    <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-padron" onclick="cargarPadronConsolidado()">
-                        <i class="fas fa-user-friends me-1" style="color: #EAB308;"></i> Personas
-                    </button>
-                </li>
+                <div class="topbar-search d-none d-lg-block">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="globalOmniSearch" placeholder="Buscar cédula, votante o puesto...">
+                    <span class="kbd-badge">Ctrl K</span>
+                </div>
 
-                <!-- 2. Geomapa -->
-                <li class="nav-item">
-                    <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-mapa" onclick="inicializarMapaSuperadmin()">
-                        <i class="fas fa-map-marker-alt me-1" style="color: #38BDF8;"></i> Geomapa
-                    </button>
-                </li>
-
-                <!-- 3. Filtro Dinámico -->
-                <li class="nav-item">
-                    <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-filtro" onclick="inicializarFiltroDinamico()">
-                        <i class="fas fa-filter me-1" style="color: #F97316;"></i> Filtro Dinámico
-                    </button>
-                </li>
-
-                <!-- 4. Eventos -->
-                <li class="nav-item">
-                    <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-eventos">
-                        <i class="fas fa-calendar-alt me-1" style="color: #F43F5E;"></i> Eventos
-                    </button>
-                </li>
-
-                <!-- 5. Cumpleaños y SMS -->
-                <li class="nav-item">
-                    <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-sms">
-                        <i class="fas fa-comment-dots me-1" style="color: #A855F7;"></i> Cumpleaños & SMS
-                    </button>
-                </li>
-
-                <!-- 6. Medios -->
-                <li class="nav-item">
-                    <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-medios">
-                        <i class="fas fa-newspaper me-1" style="color: #FB923C;"></i> Medios
-                    </button>
-                </li>
-
-                <!-- 7. Informes -->
-                <li class="nav-item">
-                    <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-informes">
-                        <i class="fas fa-file-alt me-1" style="color: #FBBF24;"></i> Informes
-                    </button>
-                </li>
-
-                <!-- 8. Operaciones (Cruces en Vivo) -->
-                <li class="nav-item">
-                    <button class="nav-link fw-bold text-danger" data-bs-toggle="pill" data-bs-target="#war-tab-cruces" onclick="cargarCrucesGlobales()">
-                        <i class="fas fa-bolt text-danger me-1"></i> Operaciones
-                    </button>
-                </li>
-
-                <!-- 9. Ranking -->
-                <li class="nav-item">
-                    <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-ranking" onclick="cargarRankingLideres()">
-                        <i class="fas fa-trophy text-warning me-1"></i> Ranking Líderes
-                    </button>
-                </li>
-
-                <!-- 10. Puesto y Censo -->
-                <li class="nav-item">
-                    <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#war-tab-censo">
-                        <i class="fas fa-id-card me-1" style="color: #EC4899;"></i> Puesto & Censo
-                    </button>
-                </li>
-
-                <!-- 11. Usuarios y Roles -->
-                <li class="nav-item">
-                    <button class="nav-link fw-bold text-white" data-bs-toggle="pill" data-bs-target="#war-tab-equipo" onclick="cargarGestionUsuarios()">
-                        <i class="fas fa-users-cog me-1" style="color: #C084FC;"></i> Usuarios & Roles
-                    </button>
-                </li>
-
-                <!-- 12. App Móvil -->
-                <li class="nav-item">
-                    <button class="nav-link fw-bold text-warning" data-bs-toggle="pill" data-bs-target="#war-tab-app-movil">
-                        <i class="fas fa-mobile-alt me-1"></i> App Móvil
-                    </button>
-                </li>
-
-                <!-- Auditoría Forense -->
-                <li class="nav-item">
-                    <button class="nav-link fw-bold text-info" data-bs-toggle="pill" data-bs-target="#war-tab-auditoria" onclick="cargarAuditoriaForense()">
-                        <i class="fas fa-shield-virus text-info me-1"></i> Bitácora Forense
-                    </button>
-                </li>
-            </ul>
-
-            <div class="tab-content">
-                <!-- TAB 1: KPIS GLOBALES -->
-                <div class="tab-pane fade show active" id="war-tab-kpis">
-
-                    <div class="kpi-grid">
-                        <div class="kpi-card blue-top">
-                            <div>
-                                <div class="kpi-val" id="kpi-total-votantes">0</div>
-                                <div class="kpi-label">Total Votantes Registrados</div>
-                            </div>
-                            <i class="fas fa-users fa-3x text-primary opacity-50"></i>
+                <div class="d-flex align-items-center gap-3">
+                    <div id="live-ws-indicator" class="badge bg-danger px-3 py-2 fw-bold" style="display: none; animation: pulse 2s infinite;">
+                        <i class="fas fa-broadcast-tower me-1"></i> EN VIVO
+                    </div>
+                    <div class="d-flex align-items-center gap-2 px-3 py-1 rounded-pill" style="background: #111726; border: 1px solid #1E293B;">
+                        <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center fw-bold" style="width: 30px; height: 30px; font-size: 0.8rem;">
+                            <i class="fas fa-user-shield"></i>
                         </div>
-                        <div class="kpi-card red-top">
-                            <div>
-                                <div class="kpi-val text-danger" id="kpi-total-cruces">0</div>
-                                <div class="kpi-label">Alertas de Cruce Inter-Partidista</div>
-                            </div>
-                            <i class="fas fa-exclamation-triangle fa-3x text-danger opacity-75"></i>
-                        </div>
-                        <div class="kpi-card green-top">
-                            <div>
-                                <div class="kpi-val text-success" id="kpi-votos-confirmados">0</div>
-                                <div class="kpi-label">Votos Confirmados en Urna</div>
-                            </div>
-                            <i class="fas fa-vote-yea fa-3x text-success opacity-50"></i>
-                        </div>
-                        <div class="kpi-card amber-top">
-                            <div>
-                                <div class="kpi-val text-white" id="kpi-inversion-apoyos">$0</div>
-                                <div class="kpi-label">Inversión Apoyos Logísticos</div>
-                            </div>
-                            <i class="fas fa-coins fa-3x text-danger opacity-50"></i>
+                        <div class="text-start d-none d-sm-block">
+                            <div class="text-white fw-bold" style="font-size: 0.82rem;" id="lbl-admin-nombre">Administrador</div>
+                            <div class="text-muted" style="font-size: 0.68rem;">Propietario del Sistema</div>
                         </div>
                     </div>
+                    <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold" onclick="cerrarSesion()" title="Cerrar Sesión">
+                        <i class="fas fa-sign-out-alt me-1"></i> Salir
+                    </button>
+                </div>
+            </header>
 
-                    <div class="row g-4">
-                        <div class="col-lg-6">
-                            <div class="step-card h-100">
-                                <h5 class="fw-bold mb-3 text-white"><i class="fas fa-chart-bar text-primary me-2"></i> Votantes por Partido / Campaña</h5>
-                                <div id="distribucion-partidos" class="pt-2"></div>
+            <!-- CONTENIDO DE LAS PESTAÑAS -->
+            <main class="civis-content-area">
+                <div class="tab-content" id="civisTabContent">
+                    <!-- TAB 1: KPIS GLOBALES & MANDO CENTRAL -->
+                    <div class="tab-pane fade show active" id="war-tab-kpis">
+                        <!-- BIENVENIDA / ENCABEZADO EJECUTIVO -->
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                            <div>
+                                <h4 class="fw-bold text-white mb-1" style="letter-spacing: -0.02em;">
+                                    <i class="fas fa-satellite-dish text-primary me-2"></i> Centro de Mando Nacional
+                                </h4>
+                                <p class="text-muted small mb-0">Consolidado general de fuerzas políticas, blindaje de datos y trazabilidad en tiempo real.</p>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge px-3 py-2" style="background: #111726; border: 1px solid #1E293B; color: #94A3B8; font-size: 0.75rem;">
+                                    <i class="fas fa-sync-alt fa-spin me-1 text-primary"></i> Sincronizado con Neon Cloud
+                                </span>
+                                <button class="btn btn-sm btn-outline-secondary px-3" onclick="cargarKpisGlobales(); cargarCrucesGlobales();" title="Refrescar métricas">
+                                    <i class="fas fa-redo-alt me-1"></i> Actualizar
+                                </button>
                             </div>
                         </div>
-                        <div class="col-lg-6">
-                            <div class="step-card h-100">
-                                <h5 class="fw-bold mb-3 text-white"><i class="fas fa-shield-alt text-danger me-2"></i> Protocolo Anti-Fraude Activo</h5>
-                                <p class="small" style="color: #CBD5E1 !important; line-height: 1.6;">
-                                    El motor de cruces compara en tiempo real cada registro contra todas las campañas participantes. Cuando un votante es reclamado por más de una organización política, se registra la colisión y se notifica inmediatamente a esta pantalla vía WebSockets.
-                                </p>
-                                <div class="alert alert-info py-2 small" style="background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.4); color: #93C5FD;">
-                                    <i class="fas fa-info-circle me-1"></i> Los candidatos y líderes no tienen visibilidad de esta sala de control ni de los datos privados de otros partidos.
+
+                        <!-- 4 HERO CARDS DE ALTA FIDELIDAD -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="hero-metric-card card-blue h-100">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="hero-metric-lbl">Censo Fidelizado</span>
+                                            <i class="fas fa-user-check text-info fs-5 opacity-75"></i>
+                                        </div>
+                                        <div class="hero-metric-val text-white" id="kpi-total-votantes">0</div>
+                                    </div>
+                                    <div class="hero-metric-sub">
+                                        <i class="fas fa-check-circle text-success"></i>
+                                        <span>Validados ante Censo RNEC</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="hero-metric-card card-red h-100">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="hero-metric-lbl">Contactos Multipartidistas</span>
+                                            <i class="fas fa-shield-alt text-danger fs-5 opacity-75"></i>
+                                        </div>
+                                        <div class="hero-metric-val text-danger" id="kpi-total-cruces">0</div>
+                                    </div>
+                                    <div class="hero-metric-sub">
+                                        <i class="fas fa-lock text-info"></i>
+                                        <span id="kpi-cruces-sub">Sistema blindado contra colisiones</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="hero-metric-card card-green h-100">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="hero-metric-lbl">Votos Confirmados (Urna)</span>
+                                            <i class="fas fa-vote-yea text-success fs-5 opacity-75"></i>
+                                        </div>
+                                        <div class="hero-metric-val text-success" id="kpi-votos-confirmados">0</div>
+                                    </div>
+                                    <div class="hero-metric-sub">
+                                        <i class="fas fa-clock text-warning"></i>
+                                        <span>Jornada Electoral / Día D</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="hero-metric-card card-amber h-100">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="hero-metric-lbl">Inversión Logística</span>
+                                            <i class="fas fa-coins text-warning fs-5 opacity-75"></i>
+                                        </div>
+                                        <div class="hero-metric-val text-white" id="kpi-inversion-apoyos">$0</div>
+                                    </div>
+                                    <div class="hero-metric-sub">
+                                        <i class="fas fa-gas-pump text-primary"></i>
+                                        <span>Transporte, Viáticos & Refrigerios</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- GRID ESTRATÉGICO 2 COLUMNAS (65% / 35%) -->
+                        <div class="row g-4">
+                            <div class="col-lg-7">
+                                <div class="step-card h-100">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="fw-bold text-white mb-0">
+                                            <i class="fas fa-chart-bar text-primary me-2"></i> Balance de Fuerzas por Campaña
+                                        </h6>
+                                        <span class="badge bg-secondary" style="font-size: 0.7rem;">Métricas en Vivo</span>
+                                    </div>
+                                    <div id="distribucion-partidos" class="pt-2"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-5">
+                                <div class="step-card h-100 d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6 class="fw-bold text-white mb-0">
+                                                <i class="fas fa-stream text-info me-2"></i> Actividad Operativa en Vivo
+                                            </h6>
+                                            <span class="badge bg-success" style="font-size: 0.68rem; animation: pulse 2s infinite;">ACTIVO</span>
+                                        </div>
+                                        <div id="liveActivityFeed" style="max-height: 250px; overflow-y: auto;">
+                                            <div class="live-activity-item">
+                                                <i class="fas fa-shield-alt text-success mt-1"></i>
+                                                <div>
+                                                    <strong class="text-white">Motor de Integridad Inicializado</strong>
+                                                    <div class="text-muted" style="font-size: 0.72rem;">Neon Cloud PostgreSQL conectado con SSL obligatorio.</div>
+                                                </div>
+                                            </div>
+                                            <div class="live-activity-item">
+                                                <i class="fas fa-mobile-alt text-primary mt-1"></i>
+                                                <div>
+                                                    <strong class="text-white">Verificación Territorial v1.1 Activa</strong>
+                                                    <div class="text-muted" style="font-size: 0.72rem;">Canal PWA Magic Link y SMS preparados.</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="p-3 rounded mt-3" style="background: #111726; border: 1px solid #1E293B;">
+                                        <div class="d-flex align-items-center gap-2 text-muted small" style="font-size: 0.74rem;">
+                                            <i class="fas fa-lock text-success"></i>
+                                            <span>Rate Limit: <strong>45 RPM</strong> &bull; Token Session: <strong>12h</strong> &bull; Ley 1581</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
                 <!-- TAB 2: AUDITORÍA DE CRUCES GLOBALES -->
                 <div class="tab-pane fade" id="war-tab-cruces">
@@ -1565,8 +1665,314 @@
                     </div>
                 </div>
 
+                <!-- TAB 14: GESTIÓN DE TOKENS MÓVILES (LÍDERES EN TERRITORIO) v1.1 -->
+                <div class="tab-pane fade" id="war-tab-tokens-v11">
+                    <div class="step-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                            <div>
+                                <h5 class="fw-bold mb-0 text-white">
+                                    <i class="fas fa-mobile-alt text-success me-2"></i> Tokens Móviles & Magic Links para Líderes (v1.1-beta)
+                                </h5>
+                                <small class="text-muted" style="color: #94A3B8 !important;">
+                                    Permita a los líderes territoriales verificar votantes y consultar puestos desde sus celulares mediante un enlace seguro, sin exponer credenciales ni dar acceso a la sala de mando.
+                                </small>
+                            </div>
+                            <button class="btn btn-success fw-bold" onclick="abrirModalCrearToken()">
+                                <i class="fas fa-plus-circle me-1"></i> Generar Enlace / Token
+                            </button>
+                        </div>
+
+                        <!-- Tarjeta de advertencia doctrinaria -->
+                        <div class="alert alert-dark border border-success d-flex align-items-center gap-3 p-3 mb-4" style="background: rgba(16, 185, 129, 0.08);">
+                            <i class="fas fa-shield-alt text-success fa-2x"></i>
+                            <div class="small text-white">
+                                <strong>Arquitectura Zero-Trust v1.1:</strong> Cada token genera un Magic Link efímero (<code>/v/{token}</code>) parametrizado por líder y campaña. Los líderes en territorio únicamente reciben respuesta binaria (Habilitado / No Encontrado) y su puesto oficial, sin retención de datos masivos en el navegador.
+                            </div>
+                        </div>
+
+                        <!-- Tabla de Tokens Activos -->
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover align-middle" id="tabla-tokens-activos">
+                                <thead>
+                                    <tr class="text-muted small">
+                                        <th>Líder / Destinatario</th>
+                                        <th>Teléfono</th>
+                                        <th>Campaña</th>
+                                        <th>Token / Enlace Rápido</th>
+                                        <th>Consultas</th>
+                                        <th>Vencimiento</th>
+                                        <th>Estado</th>
+                                        <th class="text-end">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-tokens-v11">
+                                    <tr>
+                                        <td colspan="8" class="text-center py-4 text-muted">
+                                            <i class="fas fa-spinner fa-spin me-2"></i> Cargando tokens de verificación...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 15: TRÁMITES DE HABEAS DATA - DERECHOS ARCO (LEY 1581 DE 2012) v1.1 -->
+                <div class="tab-pane fade" id="war-tab-arco-v11">
+                    <div class="step-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                            <div>
+                                <h5 class="fw-bold mb-0 text-white">
+                                    <i class="fas fa-balance-scale text-primary me-2"></i> Trámites de Derechos ARCO (Habeas Data Ley 1581 de 2012)
+                                </h5>
+                                <small class="text-muted" style="color: #94A3B8 !important;">
+                                    Bandeja de gestión de solicitudes de Acceso, Rectificación, Cancelación y Oposición con cómputo de términos legales perentorios (10 días hábiles, Art. 15 Ley 1581).
+                                </small>
+                            </div>
+                            <button class="btn btn-primary fw-bold" onclick="abrirModalRadicarArco()">
+                                <i class="fas fa-file-contract me-1"></i> Radicar Solicitud ARCO
+                            </button>
+                        </div>
+
+                        <!-- Resumen de Plazos Legales -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-3">
+                                <div class="p-3 rounded border border-secondary" style="background: #0E131F;">
+                                    <div class="text-muted small fw-bold">PENDIENTES DE TRÁMITE</div>
+                                    <h3 class="fw-bold text-warning mb-0" id="arco-stat-pendientes">0</h3>
+                                    <small class="text-muted">Requieren respuesta legal</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 rounded border border-secondary" style="background: #0E131F;">
+                                    <div class="text-muted small fw-bold">EN TRÁMITE</div>
+                                    <h3 class="fw-bold text-info mb-0" id="arco-stat-tramite">0</h3>
+                                    <small class="text-muted">En revisión jurídica</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 rounded border border-secondary" style="background: #0E131F;">
+                                    <div class="text-muted small fw-bold">RESUELTAS / SUPRIMIDAS</div>
+                                    <h3 class="fw-bold text-success mb-0" id="arco-stat-resueltas">0</h3>
+                                    <small class="text-muted">Derecho garantizado</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 rounded border border-secondary" style="background: #0E131F;">
+                                    <div class="text-muted small fw-bold">TÉRMINO PROMEDIO</div>
+                                    <h3 class="fw-bold text-white mb-0">10 Días</h3>
+                                    <small class="text-muted">Término estricto Art. 15</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tabla de Solicitudes ARCO -->
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover align-middle" id="tabla-solicitudes-arco">
+                                <thead>
+                                    <tr class="text-muted small">
+                                        <th>Radicado</th>
+                                        <th>Titular / Cédula</th>
+                                        <th>Tipo de Solicitud</th>
+                                        <th>Fecha Radicación</th>
+                                        <th>Plazo Límite (10 días)</th>
+                                        <th>Estado</th>
+                                        <th class="text-end">Gestión</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-solicitudes-arco">
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4 text-muted">
+                                            <i class="fas fa-spinner fa-spin me-2"></i> Cargando bandeja de trámites ARCO...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </main>
+    </div>
+</div>
+
+    <!-- MODAL: CREAR NUEVO TOKEN MÓVIL PARA LÍDER v1.1 -->
+    <div class="modal fade" id="modal-crear-token-v11" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: #131722; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 16px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.75);">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white fw-bold">
+                        <i class="fas fa-mobile-alt text-success me-2"></i> Generar Magic Link / Token para Líder
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-success py-2 small mb-3" style="background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.25); color: #86EFAC;">
+                        <i class="fas fa-shield-alt me-1"></i> El líder recibirá un enlace web para verificar votantes sin necesidad de usuario ni contraseña.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="small text-white fw-bold mb-1">Nombre del Líder / Destinatario *</label>
+                        <input type="text" id="token-nombre-lider" class="form-control text-white fw-bold" style="background: #151924; border-color: #2D3548;" placeholder="Ej: Don Carlos - Vereda El Porvenir" required>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="small text-white fw-bold mb-1">Teléfono / WhatsApp *</label>
+                            <input type="tel" id="token-telefono-lider" class="form-control text-white fw-bold" style="background: #151924; border-color: #2D3548;" placeholder="Ej: 3001234567" maxlength="10" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-white fw-bold mb-1">Campaña Asignada *</label>
+                            <select id="token-campana-id" class="form-select text-white fw-bold" style="background: #151924; border-color: #2D3548;">
+                                <option value="camp-01">Partido Liberal Colombiano</option>
+                                <option value="camp-02">Partido Conservador Colombiano</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="small text-white fw-bold mb-1">Vigencia (Horas) *</label>
+                            <input type="number" id="token-vigencia-horas" class="form-control text-white fw-bold" style="background: #151924; border-color: #2D3548;" value="48" min="1" max="720">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-white fw-bold mb-1">Límite de Consultas *</label>
+                            <input type="number" id="token-max-consultas" class="form-control text-white fw-bold" style="background: #151924; border-color: #2D3548;" value="500" min="10" max="10000">
+                        </div>
+                    </div>
+
+                    <!-- Enlace generado para copiar/compartir -->
+                    <div id="box-resultado-token" style="display: none;" class="p-3 rounded mt-3 bg-dark border border-success">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-success fw-bold small"><i class="fas fa-check-circle me-1"></i> ¡Token Generado Exitosamente!</span>
+                            <div class="d-flex gap-1">
+                                <button type="button" class="btn btn-sm btn-outline-light py-0 px-2 fw-bold" onclick="copiarEnlaceTokenGenerado()">
+                                    <i class="fas fa-copy me-1"></i> Copiar
+                                </button>
+                                <button type="button" id="btn-share-whatsapp-token" class="btn btn-sm btn-success py-0 px-2 fw-bold">
+                                    <i class="fab fa-whatsapp me-1"></i> WhatsApp
+                                </button>
+                            </div>
+                        </div>
+                        <div id="txt-enlace-token-generado" class="text-info small font-monospace mt-2 p-2 rounded" style="background: #090E17; word-break: break-all;"></div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" id="btn-confirmar-crear-token" class="btn btn-success fw-bold" onclick="ejecutarCrearToken()">
+                        <i class="fas fa-bolt me-1"></i> Generar Magic Link
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: RADICAR SOLICITUD DE DERECHOS ARCO (LEY 1581) v1.1 -->
+    <div class="modal fade" id="modal-radicar-arco-v11" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: #131722; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 16px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.75);">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white fw-bold">
+                        <i class="fas fa-balance-scale text-primary me-2"></i> Radicar Solicitud de Derechos ARCO
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-primary py-2 small mb-3" style="background: rgba(59, 130, 246, 0.12); border-color: rgba(59, 130, 246, 0.25); color: #93C5FD;">
+                        <i class="fas fa-info-circle me-1"></i> Conforme al Art. 15 de la Ley 1581 de 2012, el término máximo para responder es de 10 días hábiles.
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="small text-white fw-bold mb-1">Cédula del Titular *</label>
+                            <input type="number" id="arco-cedula-titular" class="form-control text-white fw-bold" style="background: #151924; border-color: #2D3548;" placeholder="Ej: 1067890123" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-white fw-bold mb-1">Tipo de Solicitud *</label>
+                            <select id="arco-tipo-solicitud" class="form-select text-white fw-bold" style="background: #151924; border-color: #2D3548;">
+                                <option value="CANCELACION">Cancelación (Supresión de datos)</option>
+                                <option value="OPOSICION">Oposición (Revocar consentimiento)</option>
+                                <option value="RECTIFICACION">Rectificación / Corrección</option>
+                                <option value="ACCESO">Acceso / Conocer datos</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="small text-white fw-bold mb-1">Nombre Completo del Ciudadano *</label>
+                        <input type="text" id="arco-nombre-titular" class="form-control text-white fw-bold" style="background: #151924; border-color: #2D3548;" placeholder="Ej: Juan Pérez Martínez" required>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="small text-white fw-bold mb-1">Teléfono / WhatsApp</label>
+                            <input type="tel" id="arco-telefono-titular" class="form-control text-white" style="background: #151924; border-color: #2D3548;" placeholder="Ej: 3001234567">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-white fw-bold mb-1">Correo Electrónico</label>
+                            <input type="email" id="arco-email-titular" class="form-control text-white" style="background: #151924; border-color: #2D3548;" placeholder="ciudadano@email.com">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="small text-white fw-bold mb-1">Motivo o Justificación de la Solicitud</label>
+                        <textarea id="arco-motivo" class="form-control text-white" style="background: #151924; border-color: #2D3548;" rows="3" placeholder="El ciudadano solicita que no se le contacte más ni figure en bases proselitistas..."></textarea>
+                    </div>
+
+                    <div id="box-feedback-arco" style="display: none;" class="p-2 rounded mt-2 small fw-bold"></div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" id="btn-confirmar-radicar-arco" class="btn btn-primary fw-bold" onclick="ejecutarRadicarArco()">
+                        <i class="fas fa-file-signature me-1"></i> Radicar Formalmente
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: GESTIONAR / RESOLVER SOLICITUD ARCO v1.1 -->
+    <div class="modal fade" id="modal-resolver-arco-v11" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: #131722; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 16px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.75);">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white fw-bold">
+                        <i class="fas fa-gavel text-warning me-2"></i> Responder Trámite ARCO
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="arco-resolver-id">
+                    <div class="mb-3">
+                        <label class="small text-muted fw-bold">Titular & Radicado:</label>
+                        <div class="text-white fw-bold fs-6" id="arco-resolver-titular-info">-</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="small text-white fw-bold mb-1">Estado de Resolución *</label>
+                        <select id="arco-resolver-estado" class="form-select text-white fw-bold" style="background: #151924; border-color: #2D3548;">
+                            <option value="RESUELTA">RESUELTA (Derecho Garantizado / Datos Suprimidos)</option>
+                            <option value="EN_TRAMITE">EN TRÁMITE (En análisis jurídico)</option>
+                            <option value="RECHAZADA">RECHAZADA (No cumple requisitos formales)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="small text-white fw-bold mb-1">Respuesta Oficial y Acciones Ejecutadas *</label>
+                        <textarea id="arco-resolver-respuesta" class="form-control text-white" style="background: #151924; border-color: #2D3548;" rows="4" placeholder="Indique las medidas técnicas implementadas (ej: registro eliminado de votantes_campana)..." required></textarea>
+                    </div>
+
+                    <div id="box-feedback-resolver-arco" style="display: none;" class="p-2 rounded mt-2 small fw-bold"></div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-warning text-dark fw-bold" onclick="ejecutarResolverArco()">
+                        <i class="fas fa-check-circle me-1"></i> Guardar Resolución
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- MODAL PARA RESTABLECER CONTRASEÑA (EXCLUSIVO SUPERADMINISTRADOR) -->

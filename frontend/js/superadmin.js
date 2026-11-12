@@ -17,6 +17,8 @@ async function inicializarWarRoomSuperadmin() {
     await cargarAuditoriaForense();
     await cargarPadronConsolidado();
     await cargarGestionUsuarios();
+    await cargarTokensTerritoriales();
+    await cargarSolicitudesArco();
 
     // Conectar WebSocket para notificaciones en vivo
     conectarWebSocketSuperadmin();
@@ -423,12 +425,20 @@ function conectarWebSocketSuperadmin() {
                 mostrarAlertaCruceFlotante(data);
                 cargarKpisGlobales();
                 cargarCrucesGlobales();
+                agregarEventoLiveFeed('CRUCE', 'Alerta de Inconsistencia', `C.C. ${data.cedula} disputada entre ${data.partido_1} y ${data.partido_2}`);
             } else if (data.tipo_evento === 'NUEVO_VOTANTE') {
                 cargarKpisGlobales();
                 cargarPadronConsolidado();
+                agregarEventoLiveFeed('TOKEN', 'Nuevo Votante Registrado', `C.C. ${data.cedula} ingresada al padrón general.`);
             } else if (data.tipo_evento === 'INTENTO_DUPLICADO_AUDITORIA') {
                 mostrarAlertaIntentoAuditoriaFlotante(data);
                 cargarAuditoriaForense();
+                agregarEventoLiveFeed('AUDITORIA', 'Intento Bloqueado', `C.C. ${data.cedula} ya registrada previamente por ${data.partido_original}.`);
+            } else if (data.tipo_evento === 'VERIFICACION_PUBLICA') {
+                agregarEventoLiveFeed('TOKEN', 'Consulta Móvil en Territorio', `Líder verificó C.C. ${data.cedula} (${data.encontrado ? 'Votante Activo' : 'No Encontrado'})`);
+            } else if (data.tipo_evento === 'SOLICITUD_ARCO_RECIBIDA') {
+                cargarSolicitudesArco();
+                agregarEventoLiveFeed('ARCO', 'Trámite Radicado Ley 1581', `Titular C.C. ${data.cedula} radicó solicitud de ${data.tipo_derecho}`);
             }
         };
 
@@ -1393,3 +1403,545 @@ async function registrarAsistenciaEnPuerta() {
     txt.value = '';
     txt.focus();
 }
+
+// ==============================================================================
+// 7. SISTEMA DE NAVEGACIÓN Y EXPERIENCIA EMPRESARIAL (SIDEBAR & CONTROLES v1.1)
+// ==============================================================================
+
+function actualizarTituloVista(titulo) {
+    const el = document.getElementById('currentViewTitle');
+    if (el) el.textContent = titulo;
+}
+
+// Control de Colapso del Sidebar y Atajo Ctrl+K
+document.addEventListener('DOMContentLoaded', () => {
+    const btnToggle = document.getElementById('btnToggleSidebar');
+    const btnMobile = document.getElementById('btnMobileSidebar');
+    const sidebar = document.getElementById('civisSidebar');
+
+    if (btnToggle && sidebar) {
+        btnToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+        });
+    }
+
+    if (btnMobile && sidebar) {
+        btnMobile.addEventListener('click', () => {
+            sidebar.classList.toggle('show-mobile');
+        });
+    }
+
+    // Atajo Global Ctrl + K para Omni-Search
+    window.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            const searchInput = document.getElementById('globalOmniSearch');
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.select();
+            }
+        }
+    });
+
+    const searchInput = document.getElementById('globalOmniSearch');
+    if (searchInput) {
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const term = searchInput.value.trim();
+                if (term) {
+                    ejecutarOmniSearch(term);
+                }
+            }
+        });
+    }
+});
+
+function ejecutarOmniSearch(term) {
+    // Si es un número (cédula), redirigir a consulta de censo
+    if (/^\d+$/.test(term)) {
+        const tabBtn = document.querySelector('button[data-bs-target="#war-tab-censo"]');
+        if (tabBtn) {
+            tabBtn.click();
+            const txt = document.getElementById('txt-tab-censo-cedula');
+            if (txt) {
+                txt.value = term;
+                if (typeof consultarCensoDesdeTab === 'function') {
+                    consultarCensoDesdeTab();
+                }
+            }
+        }
+    } else {
+        // Redirigir a padrón y filtrar
+        const tabBtn = document.querySelector('button[data-bs-target="#war-tab-padron"]');
+        if (tabBtn) {
+            tabBtn.click();
+            const txt = document.getElementById('txt-buscar-padron');
+            if (txt) {
+                txt.value = term;
+                if (typeof filtrarPadronConsolidado === 'function') {
+                    filtrarPadronConsolidado();
+                }
+            }
+        }
+    }
+}
+
+function agregarEventoLiveFeed(tipo, titulo, detalle) {
+    const feed = document.getElementById('liveActivityFeed');
+    if (!feed) return;
+
+    // Remover mensaje placeholder si existe
+    const emptyNotice = feed.querySelector('.text-muted.text-center');
+    if (emptyNotice) emptyNotice.remove();
+
+    const hora = new Date().toLocaleTimeString();
+    let badgeColor = 'bg-primary';
+    let icon = 'fas fa-info-circle';
+
+    if (tipo === 'CRUCE') {
+        badgeColor = 'bg-danger';
+        icon = 'fas fa-bolt';
+    } else if (tipo === 'AUDITORIA') {
+        badgeColor = 'bg-warning text-dark';
+        icon = 'fas fa-shield-alt';
+    } else if (tipo === 'TOKEN') {
+        badgeColor = 'bg-success';
+        icon = 'fas fa-mobile-alt';
+    } else if (tipo === 'ARCO') {
+        badgeColor = 'bg-info text-dark';
+        icon = 'fas fa-balance-scale';
+    }
+
+    const item = document.createElement('div');
+    item.className = 'live-activity-item';
+    item.innerHTML = `
+        <span class="badge ${badgeColor} p-2 rounded-circle" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;"><i class="${icon}"></i></span>
+        <div class="flex-grow-1">
+            <div class="d-flex justify-content-between align-items-center">
+                <strong class="text-white">${titulo}</strong>
+                <small class="text-muted">${hora}</small>
+            </div>
+            <div class="text-muted small mt-1">${detalle}</div>
+        </div>
+    `;
+
+    feed.prepend(item);
+
+    // Mantener máximo 20 eventos
+    while (feed.children.length > 20) {
+        feed.removeChild(feed.lastChild);
+    }
+}
+
+// ==============================================================================
+// 8. GESTIÓN DE TOKENS MÓVILES PARA LÍDERES (v1.1-beta)
+// ==============================================================================
+
+async function cargarTokensTerritoriales() {
+    const tbody = document.getElementById('tbody-tokens-v11');
+    if (!tbody) return;
+
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-white"><i class="fas fa-spinner fa-spin me-2"></i> Cargando tokens y magic links...</td></tr>`;
+
+    try {
+        const tokens = await ElectoralAPI.getTokens();
+        if (!tokens || tokens.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted"><i class="fas fa-info-circle me-1"></i> No se han emitido tokens móviles de verificación territorial.</td></tr>`;
+            return;
+        }
+
+        const baseUrl = window.location.origin;
+
+        tbody.innerHTML = tokens.map(t => {
+            const expDate = new Date(t.fecha_expiracion);
+            const vencido = new Date() > expDate;
+            const linkUrl = `${baseUrl}/v/${t.token}`;
+            
+            let estadoBadge = `<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> ACTIVO</span>`;
+            if (!t.activo) {
+                estadoBadge = `<span class="badge bg-secondary"><i class="fas fa-ban me-1"></i> REVOCADO</span>`;
+            } else if (vencido) {
+                estadoBadge = `<span class="badge bg-danger"><i class="fas fa-clock me-1"></i> EXPIRADO</span>`;
+            }
+
+            return `
+                <tr>
+                    <td>
+                        <strong class="text-white">${t.nombre_lider}</strong>
+                        <div class="small text-muted">ID: ${t.id}</div>
+                    </td>
+                    <td>
+                        <span class="text-info fw-bold">${t.telefono_lider || 'N/A'}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-dark border border-secondary text-white">${t.campana_id}</span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-1">
+                            <code class="text-success small bg-black px-2 py-1 rounded">${t.token}</code>
+                            <button class="btn btn-sm btn-outline-light py-0 px-2" title="Copiar Magic Link" onclick="copiarTextoPortapapeles('${linkUrl}', 'Enlace Magic Link copiado')">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <a href="https://wa.me/57${t.telefono_lider}?text=${encodeURIComponent('Hola ' + t.nombre_lider + ', aquí tienes tu enlace oficial CIVIS para verificar votantes y consultar puestos de votación: ' + linkUrl)}" target="_blank" class="btn btn-sm btn-outline-success py-0 px-2" title="Enviar por WhatsApp">
+                                <i class="fab fa-whatsapp"></i>
+                            </a>
+                        </div>
+                    </td>
+                    <td>
+                        <strong class="text-white">${t.consultas_realizadas}</strong> / <span class="text-muted">${t.max_consultas}</span>
+                    </td>
+                    <td>
+                        <small class="text-white">${expDate.toLocaleDateString()} ${expDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                    </td>
+                    <td>${estadoBadge}</td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            ${t.activo && !vencido ? `
+                                <button class="btn btn-outline-danger" title="Revocar Token" onclick="ejecutarRevocarToken(${t.id})">
+                                    <i class="fas fa-ban"></i>
+                                </button>
+                            ` : `
+                                <button class="btn btn-outline-info" title="Renovar +48h" onclick="ejecutarRenovarToken(${t.id})">
+                                    <i class="fas fa-redo"></i>
+                                </button>
+                            `}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">Error al cargar tokens: ${err.message}</td></tr>`;
+    }
+}
+
+function abrirModalCrearToken() {
+    const modalEl = document.getElementById('modal-crear-token-v11');
+    if (modalEl) {
+        document.getElementById('token-nombre-lider').value = '';
+        document.getElementById('token-telefono-lider').value = '';
+        document.getElementById('token-vigencia-horas').value = '48';
+        document.getElementById('token-max-consultas').value = '500';
+        document.getElementById('box-resultado-token').style.display = 'none';
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+let ultimoEnlaceTokenGenerado = '';
+
+async function ejecutarCrearToken() {
+    const nombre = document.getElementById('token-nombre-lider').value.trim();
+    const telefono = document.getElementById('token-telefono-lider').value.trim();
+    const campanaId = document.getElementById('token-campana-id').value;
+    const vigencia = parseInt(document.getElementById('token-vigencia-horas').value) || 48;
+    const maxConsultas = parseInt(document.getElementById('token-max-consultas').value) || 500;
+
+    if (!nombre) {
+        alert("Por favor ingrese el nombre del líder o destinatario.");
+        return;
+    }
+
+    const btn = document.getElementById('btn-confirmar-crear-token');
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin me-1"></i> Generando...`;
+
+    try {
+        const res = await ElectoralAPI.crearToken({
+            nombre_lider: nombre,
+            telefono_lider: telefono,
+            campana_id: campanaId,
+            vigencia_horas: vigencia,
+            max_consultas: maxConsultas
+        });
+
+        const fullUrl = `${window.location.origin}${res.magic_link}`;
+        ultimoEnlaceTokenGenerado = fullUrl;
+
+        const box = document.getElementById('box-resultado-token');
+        const txt = document.getElementById('txt-enlace-token-generado');
+        const btnWa = document.getElementById('btn-share-whatsapp-token');
+
+        txt.textContent = fullUrl;
+        if (telefono) {
+            btnWa.onclick = () => {
+                const mensaje = `Hola ${nombre}, aquí tienes tu enlace oficial CIVIS para verificar votantes y consultar puestos: ${fullUrl}`;
+                window.open(`https://wa.me/57${telefono}?text=${encodeURIComponent(mensaje)}`, '_blank');
+            };
+            btnWa.style.display = 'inline-block';
+        } else {
+            btnWa.style.display = 'none';
+        }
+
+        box.style.display = 'block';
+        btn.innerHTML = `<i class="fas fa-check me-1"></i> Generado`;
+
+        // Refrescar tabla en segundo plano
+        cargarTokensTerritoriales();
+    } catch (err) {
+        alert("Error al generar token: " + err.message);
+        btn.innerHTML = `<i class="fas fa-bolt me-1"></i> Generar Magic Link`;
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function copiarEnlaceTokenGenerado() {
+    if (ultimoEnlaceTokenGenerado) {
+        copiarTextoPortapapeles(ultimoEnlaceTokenGenerado, "Magic link copiado al portapapeles.");
+    }
+}
+
+async function ejecutarRevocarToken(id) {
+    if (!confirm("¿Está seguro de revocar este token? El líder ya no podrá realizar consultas con este enlace.")) return;
+    try {
+        await ElectoralAPI.revocarToken(id);
+        cargarTokensTerritoriales();
+    } catch (err) {
+        alert("Error al revocar token: " + err.message);
+    }
+}
+
+async function ejecutarRenovarToken(id) {
+    try {
+        await ElectoralAPI.renovarToken(id, 48);
+        cargarTokensTerritoriales();
+    } catch (err) {
+        alert("Error al renovar token: " + err.message);
+    }
+}
+
+// ==============================================================================
+// 9. GESTIÓN DE DERECHOS ARCO - HABEAS DATA (LEY 1581 DE 2012)
+// ==============================================================================
+
+async function cargarSolicitudesArco() {
+    const tbody = document.getElementById('tbody-solicitudes-arco');
+    if (!tbody) return;
+
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-white"><i class="fas fa-spinner fa-spin me-2"></i> Cargando bandeja de trámites ARCO...</td></tr>`;
+
+    try {
+        const solicitudes = await ElectoralAPI.getSolicitudesArco();
+        
+        let countPendientes = 0;
+        let countTramite = 0;
+        let countResueltas = 0;
+
+        solicitudes.forEach(s => {
+            if (s.estado === 'PENDIENTE') countPendientes++;
+            else if (s.estado === 'EN_TRAMITE') countTramite++;
+            else if (s.estado === 'EJECUTADA' || s.estado === 'RESUELTA') countResueltas++;
+        });
+
+        const pEl = document.getElementById('arco-stat-pendientes');
+        const tEl = document.getElementById('arco-stat-tramite');
+        const rEl = document.getElementById('arco-stat-resueltas');
+        if (pEl) pEl.textContent = countPendientes;
+        if (tEl) tEl.textContent = countTramite;
+        if (rEl) rEl.textContent = countResueltas;
+
+        if (solicitudes.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted"><i class="fas fa-check-circle me-1"></i> No hay solicitudes ARCO radicadas en el sistema.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = solicitudes.map(s => {
+            const fechaRad = new Date(s.fecha_recepcion || s.fecha_radicacion || Date.now());
+            const diasRestantes = typeof s.dias_restantes === 'number' ? s.dias_restantes : 10;
+
+            let terminoBadge = `<span class="badge bg-success">${diasRestantes} días restantes</span>`;
+            if (s.estado === 'EJECUTADA' || s.estado === 'RESUELTA') {
+                terminoBadge = `<span class="badge bg-secondary">Archivado</span>`;
+            } else if (diasRestantes < 0) {
+                terminoBadge = `<span class="badge bg-danger animate-pulse">VENCIDO (${Math.abs(diasRestantes)}d)</span>`;
+            } else if (diasRestantes <= 3) {
+                terminoBadge = `<span class="badge bg-warning text-dark">${diasRestantes} días (Urgente)</span>`;
+            }
+
+            let estadoBadge = `<span class="badge bg-warning text-dark">${s.estado}</span>`;
+            if (s.estado === 'EN_TRAMITE') estadoBadge = `<span class="badge bg-info text-dark">EN TRÁMITE</span>`;
+            if (s.estado === 'EJECUTADA' || s.estado === 'RESUELTA') estadoBadge = `<span class="badge bg-success">EJECUTADA</span>`;
+            if (s.estado === 'RECHAZADA') estadoBadge = `<span class="badge bg-danger">RECHAZADA</span>`;
+
+            let tipoBadge = `<span class="badge bg-danger">${s.tipo}</span>`;
+            if (s.tipo === 'OPOSICION') tipoBadge = `<span class="badge bg-warning text-dark">OPOSICIÓN</span>`;
+            if (s.tipo === 'RECTIFICACION') tipoBadge = `<span class="badge bg-primary">RECTIFICACIÓN</span>`;
+            if (s.tipo === 'ACCESO') tipoBadge = `<span class="badge bg-secondary">ACCESO</span>`;
+
+            return `
+                <tr>
+                    <td>
+                        <strong class="text-white">${s.id}</strong>
+                    </td>
+                    <td>
+                        <div class="text-white fw-bold">${s.justificacion ? s.justificacion.slice(0, 35) + '...' : 'Ciudadano Titular'}</div>
+                        <div class="small text-muted">C.C. <strong class="text-white">${s.cedula}</strong> &bull; ${s.canal_recepcion || 'WEB'}</div>
+                    </td>
+                    <td>${tipoBadge}</td>
+                    <td>
+                        <small class="text-white">${fechaRad.toLocaleDateString()}</small>
+                    </td>
+                    <td>${terminoBadge}</td>
+                    <td>${estadoBadge}</td>
+                    <td class="text-end">
+                        ${s.estado === 'PENDIENTE' ? `
+                            <button class="btn btn-sm btn-outline-warning fw-bold" onclick="abrirModalResolverArco('${s.id}', 'C.C. ${s.cedula}', '${s.id}', '${s.estado}')">
+                                <i class="fas fa-gavel me-1"></i> Resolver
+                            </button>
+                        ` : `
+                            <span class="text-muted small"><i class="fas fa-check text-success me-1"></i> Atendida</span>
+                        `}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Error al cargar solicitudes ARCO: ${err.message}</td></tr>`;
+    }
+}
+
+function abrirModalRadicarArco() {
+    const modalEl = document.getElementById('modal-radicar-arco-v11');
+    if (modalEl) {
+        document.getElementById('arco-cedula-titular').value = '';
+        document.getElementById('arco-nombre-titular').value = '';
+        document.getElementById('arco-telefono-titular').value = '';
+        document.getElementById('arco-email-titular').value = '';
+        document.getElementById('arco-motivo').value = '';
+        document.getElementById('box-feedback-arco').style.display = 'none';
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+async function ejecutarRadicarArco() {
+    const cedula = document.getElementById('arco-cedula-titular').value.trim();
+    const nombre = document.getElementById('arco-nombre-titular').value.trim();
+    const tipo = document.getElementById('arco-tipo-solicitud').value;
+    const telefono = document.getElementById('arco-telefono-titular').value.trim();
+    const email = document.getElementById('arco-email-titular').value.trim();
+    const motivo = document.getElementById('arco-motivo').value.trim();
+
+    if (!cedula) {
+        alert("Por favor ingrese la cédula del titular.");
+        return;
+    }
+
+    const btn = document.getElementById('btn-confirmar-radicar-arco');
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin me-1"></i> Radicando...`;
+
+    try {
+        const infoContacto = [nombre, telefono ? `Tel: ${telefono}` : '', email ? `Email: ${email}` : '', motivo].filter(Boolean).join(' | ');
+
+        const res = await ElectoralAPI.crearSolicitudArco({
+            cedula: cedula,
+            tipo: tipo,
+            canal_recepcion: 'WEB_SUPERADMIN',
+            justificacion: infoContacto || 'Solicitud radicada ante la campaña'
+        });
+
+        const feedback = document.getElementById('box-feedback-arco');
+        feedback.style.display = 'block';
+        feedback.className = 'alert alert-success py-2 small fw-bold mt-2';
+        feedback.innerHTML = `<i class="fas fa-check-circle me-1"></i> Radicado exitoso: <strong>${res.id}</strong>. Término de 10 días en curso.`;
+
+        cargarSolicitudesArco();
+        setTimeout(() => {
+            const modalEl = document.getElementById('modal-radicar-arco-v11');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+        }, 1800);
+    } catch (err) {
+        alert("Error al radicar solicitud: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fas fa-file-signature me-1"></i> Radicar Formalmente`;
+    }
+}
+
+function abrirModalResolverArco(id, titular, radicado, estadoActual) {
+    const modalEl = document.getElementById('modal-resolver-arco-v11');
+    if (modalEl) {
+        document.getElementById('arco-resolver-id').value = id;
+        document.getElementById('arco-resolver-titular-info').textContent = `${titular} (ID: ${radicado})`;
+        document.getElementById('arco-resolver-estado').value = (estadoActual === 'PENDIENTE') ? 'RESUELTA' : estadoActual;
+        document.getElementById('arco-resolver-respuesta').value = '';
+        document.getElementById('box-feedback-resolver-arco').style.display = 'none';
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+async function ejecutarResolverArco() {
+    const id = document.getElementById('arco-resolver-id').value;
+    const estado = document.getElementById('arco-resolver-estado').value;
+    const respuesta = document.getElementById('arco-resolver-respuesta').value.trim();
+
+    if (!respuesta) {
+        alert("Por favor ingrese la respuesta formal y las medidas técnicas ejecutadas.");
+        return;
+    }
+
+    try {
+        await ElectoralAPI.procesarSolicitudArco(id, {
+            accion: (estado === 'RESUELTA' || estado === 'EJECUTADA') ? 'EJECUTAR' : 'RECHAZAR',
+            justificacion: respuesta
+        });
+
+        const feedback = document.getElementById('box-feedback-resolver-arco');
+        feedback.style.display = 'block';
+        feedback.className = 'alert alert-success py-2 small fw-bold mt-2';
+        feedback.innerHTML = `<i class="fas fa-check-double me-1"></i> Trámite actualizado con éxito.`;
+
+        cargarSolicitudesArco();
+        setTimeout(() => {
+            const modalEl = document.getElementById('modal-resolver-arco-v11');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+        }, 1500);
+    } catch (err) {
+        alert("Error al resolver trámite: " + err.message);
+    }
+}
+
+function copiarTextoPortapapeles(texto, mensajeExito) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(texto).then(() => {
+            mostrarToastNotificacion(mensajeExito || "Copiado al portapapeles");
+        }).catch(() => {
+            prompt("Copie el enlace manualmente:", texto);
+        });
+    } else {
+        prompt("Copie el enlace manualmente:", texto);
+    }
+}
+
+function mostrarToastNotificacion(mensaje) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-civis-notification';
+    toast.innerHTML = `<i class="fas fa-check-circle text-success me-2"></i> ${mensaje}`;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: #111726;
+        color: #fff;
+        padding: 12px 20px;
+        border-radius: 10px;
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        z-index: 99999;
+        font-weight: 600;
+        font-size: 0.85rem;
+        animation: fadeIn 0.2s ease;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.4s ease';
+        setTimeout(() => toast.remove(), 400);
+    }, 2800);
+}
+

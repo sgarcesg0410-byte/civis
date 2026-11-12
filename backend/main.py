@@ -959,7 +959,7 @@ def consultar_habeas_data(cedula: str):
     cedula_limpia = cedula.strip()
     conn = get_db()
     registro = conn.execute("""
-        SELECT v.cedula, v.fecha_registro, c.nombre as campana, c.partido
+        SELECT v.cedula, v.fecha_registro, c.nombre_candidato as campana, c.partido
         FROM votantes_campana v
         JOIN campanas c ON v.campana_id = c.id
         WHERE v.cedula = ?
@@ -1416,14 +1416,14 @@ def listar_tokens_verificacion(user: dict = Depends(get_current_user)):
     conn = get_db()
     if user.get("rol") == "SUPERADMIN":
         tokens = conn.execute("""
-            SELECT t.*, c.nombre as campana_nombre, c.partido 
+            SELECT t.*, c.nombre_candidato as campana_nombre, c.partido 
             FROM tokens_verificacion t
             JOIN campanas c ON t.campana_id = c.id
             ORDER BY t.fecha_creacion DESC
         """).fetchall()
     else:
         tokens = conn.execute("""
-            SELECT t.*, c.nombre as campana_nombre, c.partido 
+            SELECT t.*, c.nombre_candidato as campana_nombre, c.partido 
             FROM tokens_verificacion t
             JOIN campanas c ON t.campana_id = c.id
             WHERE t.campana_id = ?
@@ -1556,7 +1556,7 @@ def procesar_solicitud_arco(sol_id: str, data: ProcesarArcoRequest, admin: dict 
     if data.accion.upper() == "EJECUTAR":
         # Si es CANCELACION u OPOSICION, suprimir datos personales y apoyos
         if sol_dict["tipo"] in ("CANCELACION", "OPOSICION"):
-            cursor.execute("DELETE FROM apoyos_logistica WHERE votante_id IN (SELECT id FROM votantes_campana WHERE cedula = ?)", (cedula,))
+            cursor.execute("DELETE FROM apoyos_logistica WHERE votante_cedula = ?", (cedula,))
             cursor.execute("DELETE FROM votantes_campana WHERE cedula = ?", (cedula,))
         
         cursor.execute("""
@@ -1582,7 +1582,7 @@ def listar_verificaciones_publicas(admin: dict = Depends(require_superadmin)):
     """Consulta la bitácora de verificaciones territoriales realizadas vía link o SMS."""
     conn = get_db()
     logs = conn.execute("""
-        SELECT a.*, t.zona_asignada, t.telefono_asociado, c.nombre as campana_nombre 
+        SELECT a.*, t.zona_asignada, t.telefono_asociado, c.nombre_candidato as campana_nombre 
         FROM auditoria_verificaciones_publicas a
         LEFT JOIN tokens_verificacion t ON a.token = t.token
         LEFT JOIN campanas c ON t.campana_id = c.id

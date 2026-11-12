@@ -159,11 +159,29 @@ class PostgresConnectionWrapper:
 # OBTENCIÓN DE CONEXIÓN (GET_DB)
 # ==============================================================================
 def get_db():
-    """Retorna una conexión activa (PostgreSQL Administrado o SQLite local)."""
+    """Retorna una conexión activa (PostgreSQL Administrado o SQLite local) con auto-sanación ante idle timeouts."""
     global IS_POSTGRES, pg_pool
     if IS_POSTGRES and pg_pool:
         try:
             raw_conn = pg_pool.getconn()
+            # Validación preventiva ante cierres de sockets SSL por inactividad de Neon Serverless
+            necesita_reemplazo = False
+            if raw_conn.closed != 0:
+                necesita_reemplazo = True
+            else:
+                try:
+                    with raw_conn.cursor() as test_cur:
+                        test_cur.execute("SELECT 1;")
+                except Exception:
+                    necesita_reemplazo = True
+
+            if necesita_reemplazo:
+                try:
+                    pg_pool.putconn(raw_conn, close=True)
+                except Exception:
+                    pass
+                raw_conn = pg_pool.getconn()
+
             return PostgresConnectionWrapper(raw_conn, pg_pool)
         except Exception as e:
             if not ALLOW_SQLITE_FALLBACK:

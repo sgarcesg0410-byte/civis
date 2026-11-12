@@ -150,4 +150,53 @@ class ElectoralAPI {
             body: JSON.stringify({ telefono })
         });
     }
+
+    // ==========================================================================
+    // MÓDULOS CIVIS v1.1: TOKENS TERRITORIALES & HABEAS DATA ARCO
+    // ==========================================================================
+    static getTokens() {
+        return this.request('/superadmin/tokens');
+    }
+
+    static crearToken(datos) {
+        return this.request('/superadmin/tokens', {
+            method: 'POST',
+            body: JSON.stringify(datos)
+        });
+    }
+
+    static revocarToken(token) {
+        return this.request(`/superadmin/tokens/${token}`, {
+            method: 'DELETE'
+        });
+    }
+
+    static renovarToken(token, dias) {
+        return this.request(`/superadmin/tokens/${token}/renovar`, {
+            method: 'POST',
+            body: JSON.stringify({ dias_adicionales: dias || 7 })
+        });
+    }
+
+    static getSolicitudesArco() {
+        return this.request('/superadmin/arco/solicitudes');
+    }
+
+    static crearSolicitudArco(datos) {
+        return this.request('/superadmin/arco/solicitudes', {
+            method: 'POST',
+            body: JSON.stringify(datos)
+        });
+    }
+
+    static procesarSolicitudArco(id, datos) {
+        return this.request(`/superadmin/arco/solicitudes/${id}/procesar`, {
+            method: 'POST',
+            body: JSON.stringify(datos)
+        });
+    }
+
+    static getVerificacionesPublicas() {
+        return this.request('/superadmin/verificaciones-publicas');
+    }
 }
