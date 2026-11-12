@@ -291,6 +291,47 @@ def init_db():
             fecha_hora TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
 
+        -- Tablas Nuevas v1.1-beta: Tokens de verificación territorial sin login
+        CREATE TABLE IF NOT EXISTS tokens_verificacion (
+            token VARCHAR(64) PRIMARY KEY,
+            directivo_creador_id VARCHAR(50) NOT NULL,
+            campana_id VARCHAR(50) NOT NULL,
+            zona_asignada VARCHAR(100),
+            telefono_asociado VARCHAR(20),
+            activo BOOLEAN DEFAULT TRUE,
+            fecha_creacion TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            fecha_expiracion TIMESTAMP WITH TIME ZONE NOT NULL,
+            consultas_hoy INT DEFAULT 0,
+            limite_diario INT DEFAULT 200,
+            fecha_ultimo_reset DATE DEFAULT CURRENT_DATE,
+            FOREIGN KEY (campana_id) REFERENCES campanas(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS auditoria_verificaciones_publicas (
+            id VARCHAR(50) PRIMARY KEY,
+            token VARCHAR(64) NOT NULL,
+            cedula_consultada VARCHAR(30) NOT NULL,
+            estado_respuesta VARCHAR(20),
+            canal VARCHAR(20) DEFAULT 'WEB',
+            ip_origen VARCHAR(45),
+            telefono_origen VARCHAR(30),
+            fecha_consulta TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS solicitudes_arco (
+            id VARCHAR(50) PRIMARY KEY,
+            cedula VARCHAR(30) NOT NULL,
+            tipo VARCHAR(20) NOT NULL,
+            canal_recepcion VARCHAR(20) NOT NULL,
+            fecha_recepcion TIMESTAMP WITH TIME ZONE NOT NULL,
+            fecha_limite_respuesta TIMESTAMP WITH TIME ZONE NOT NULL,
+            evidencia_url VARCHAR(500),
+            estado VARCHAR(20) DEFAULT 'PENDIENTE',
+            directivo_procesa_id VARCHAR(50),
+            fecha_procesamiento TIMESTAMP WITH TIME ZONE,
+            justificacion TEXT
+        );
+
         -- 2. Índices de Alto Rendimiento para Millones de Registros
         CREATE INDEX IF NOT EXISTS idx_censo_cedula ON censo_electoral(cedula);
         CREATE INDEX IF NOT EXISTS idx_censo_mpio_puesto ON censo_electoral(municipio, puesto_votacion);
@@ -300,6 +341,9 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_alertas_cedula ON alertas_cruces(cedula);
         CREATE INDEX IF NOT EXISTS idx_auditoria_fecha ON auditoria_intentos_duplicados(fecha_hora DESC);
         CREATE INDEX IF NOT EXISTS idx_usuarios_username ON usuarios(username);
+        CREATE INDEX IF NOT EXISTS idx_tokens_campana ON tokens_verificacion(campana_id);
+        CREATE INDEX IF NOT EXISTS idx_auditoria_verif_token ON auditoria_verificaciones_publicas(token);
+        CREATE INDEX IF NOT EXISTS idx_solicitudes_arco_cedula ON solicitudes_arco(cedula);
         """)
         conn.commit()
 
@@ -414,9 +458,53 @@ def init_db():
             fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
+        -- Tablas Nuevas v1.1-beta (SQLite)
+        CREATE TABLE IF NOT EXISTS tokens_verificacion (
+            token TEXT PRIMARY KEY,
+            directivo_creador_id TEXT NOT NULL,
+            campana_id TEXT NOT NULL,
+            zona_asignada TEXT,
+            telefono_asociado TEXT,
+            activo INTEGER DEFAULT 1,
+            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            fecha_expiracion TIMESTAMP NOT NULL,
+            consultas_hoy INTEGER DEFAULT 0,
+            limite_diario INTEGER DEFAULT 200,
+            fecha_ultimo_reset DATE DEFAULT CURRENT_DATE,
+            FOREIGN KEY (campana_id) REFERENCES campanas(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS auditoria_verificaciones_publicas (
+            id TEXT PRIMARY KEY,
+            token TEXT NOT NULL,
+            cedula_consultada TEXT NOT NULL,
+            estado_respuesta TEXT,
+            canal TEXT DEFAULT 'WEB',
+            ip_origen TEXT,
+            telefono_origen TEXT,
+            fecha_consulta TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS solicitudes_arco (
+            id TEXT PRIMARY KEY,
+            cedula TEXT NOT NULL,
+            tipo TEXT NOT NULL,
+            canal_recepcion TEXT NOT NULL,
+            fecha_recepcion TIMESTAMP NOT NULL,
+            fecha_limite_respuesta TIMESTAMP NOT NULL,
+            evidencia_url TEXT,
+            estado TEXT DEFAULT 'PENDIENTE',
+            directivo_procesa_id TEXT,
+            fecha_procesamiento TIMESTAMP,
+            justificacion TEXT
+        );
+
         CREATE INDEX IF NOT EXISTS idx_censo_cedula ON censo_electoral(cedula);
         CREATE INDEX IF NOT EXISTS idx_censo_mpio ON censo_electoral(municipio);
         CREATE INDEX IF NOT EXISTS idx_votantes_campana_cedula ON votantes_campana(campana_id, cedula);
+        CREATE INDEX IF NOT EXISTS idx_tokens_campana_sqlite ON tokens_verificacion(campana_id);
+        CREATE INDEX IF NOT EXISTS idx_auditoria_verif_sqlite ON auditoria_verificaciones_publicas(token);
+        CREATE INDEX IF NOT EXISTS idx_solicitudes_arco_sqlite ON solicitudes_arco(cedula);
         """)
         conn.commit()
 

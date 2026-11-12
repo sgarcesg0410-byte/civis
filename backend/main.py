@@ -1,12 +1,13 @@
 import os
 import uuid
+import secrets
 import urllib.parse
-from datetime import datetime
+from datetime import datetime, timedelta, date
 from typing import List, Optional
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Header, Depends
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Header, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from pydantic import BaseModel
 from pathlib import Path
 
@@ -85,15 +86,47 @@ class RegistroVotanteRequest(BaseModel):
     cedula: str
     telefono: Optional[str] = ""
     barrio_direccion: Optional[str] = ""
-    compromiso: Optional[str] = "SEGURO"
-    estado_dia_d: Optional[str] = "PENDIENTE"
+    compromiso: Optional[str] = "INDECISO" # v1.1-beta: INDECISO es el estado normal del elector libre
+    estado_dia_d: Optional[str] = "NO_VOTO"
     observaciones: Optional[str] = ""
+    # Cumplimiento Ley 1581 de 2012
+    consentimiento_datos: bool = True
+    canal_consentimiento: Optional[str] = "PLANILLA_FISICA"
 
 class ApoyoLogisticaRequest(BaseModel):
     votante_cedula: str
     tipo_apoyo: str # Transporte, Refrigerio, Viático Día D, Testigo
     valor_economico: float
     descripcion: Optional[str] = ""
+
+# Modelos v1.1-beta: Verificación Territorial y ARCO
+class PublicVerificarRequest(BaseModel):
+    token: str
+    cedula: str
+
+class SmsInboundRequest(BaseModel):
+    from_number: Optional[str] = ""
+    text: str
+
+class CrearTokenRequest(BaseModel):
+    telefono_asociado: Optional[str] = ""
+    zona_asignada: Optional[str] = "Territorio General"
+    duracion_dias: Optional[int] = 14
+    limite_diario: Optional[int] = 200
+
+class RenovarTokenRequest(BaseModel):
+    dias_adicionales: Optional[int] = 7
+
+class SolicitudArcoCreate(BaseModel):
+    cedula: str
+    tipo: str # ACCESO, RECTIFICACION, CANCELACION, OPOSICION
+    canal_recepcion: str # CORREO, ESCRITO, LLAMADA, SIC
+    evidencia_url: Optional[str] = ""
+    justificacion: Optional[str] = ""
+
+class ProcesarArcoRequest(BaseModel):
+    accion: str # EJECUTAR, RECHAZAR
+    justificacion: str
 
 # ==============================================================================
 # SEGURIDAD Y PROTECCIÓN CRIPTOGRÁFICA (JWT & RATE LIMITING)
@@ -163,6 +196,21 @@ def check_rate_limit(key: str):
             detail="Límite de consultas de verificación alcanzado. Por seguridad anti-scraping, espere 1 minuto."
         )
     RATE_LIMIT_STORE[key].append(now)
+
+# Rate Limiter para verificaciones públicas de líderes territoriales
+TOKEN_RATE_LIMIT_STORE = defaultdict(list)
+MAX_TOKEN_RPM = int(os.getenv("MAX_VERIFICACIONES_PUBLICAS_RPM", "60"))
+
+def check_token_rate_limit(token: str):
+    now = time.time()
+    window = now - 60
+    TOKEN_RATE_LIMIT_STORE[token] = [t for t in TOKEN_RATE_LIMIT_STORE[token] if t > window]
+    if len(TOKEN_RATE_LIMIT_STORE[token]) >= MAX_TOKEN_RPM:
+        raise HTTPException(
+            status_code=429,
+            detail="Límite por minuto alcanzado para este enlace. Espere 60 segundos."
+        )
+    TOKEN_RATE_LIMIT_STORE[token].append(now)
 
 # ==============================================================================
 # AUTENTICACIÓN Y SEGURIDAD RBAC
@@ -950,6 +998,599 @@ def revocar_consentimiento_habeas_data(cedula: str):
         "success": True,
         "mensaje": "Consentimiento revocado con éxito. Sus datos personales han sido eliminados de conformidad con la Ley 1581 de 2012."
     }
+
+# ==============================================================================
+# CIVIS v1.1-beta: PWA MAGIC LINK & VERIFICACIÓN TERRITORIAL SIN LOGIN
+# ==============================================================================
+PWA_MAGIC_LINK_HTML = """<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CIVIS | Verificador Territorial</title>
+    <style>
+        :root {
+            --bg: #0B0F19;
+            --surface: #151D2F;
+            --card: #1E293B;
+            --border: #334155;
+            --text: #F8FAFC;
+            --text-muted: #94A3B8;
+            --green: #10B981;
+            --yellow: #F59E0B;
+            --red: #EF4444;
+            --primary: #3B82F6;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 1rem; }
+        .container { width: 100%; max-width: 480px; }
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+        .logo-box { display: flex; align-items: center; gap: 0.75rem; }
+        .logo-badge { background: #DC2626; color: white; font-weight: 800; font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 6px; letter-spacing: 0.05em; }
+        .title { font-size: 1.15rem; font-weight: 700; }
+        .zone-badge { font-size: 0.75rem; background: var(--surface); color: var(--text-muted); padding: 0.35rem 0.75rem; border-radius: 999px; border: 1px solid var(--border); }
+        
+        .main-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); margin-bottom: 1.5rem; }
+        .input-label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; display: block; text-transform: uppercase; letter-spacing: 0.05em; }
+        .input-group { position: relative; margin-bottom: 1.25rem; }
+        .cedula-input { width: 100%; background: var(--card); border: 2px solid var(--border); color: white; font-size: 1.5rem; font-weight: 700; padding: 0.85rem 1rem; border-radius: 12px; outline: none; transition: border-color 0.2s; letter-spacing: 0.05em; }
+        .cedula-input:focus { border-color: var(--primary); }
+        
+        .btn-check { width: 100%; background: var(--primary); color: white; font-size: 1.1rem; font-weight: 700; padding: 1rem; border: none; border-radius: 12px; cursor: pointer; transition: transform 0.1s, background 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .btn-check:active { transform: scale(0.98); }
+        .btn-check:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        .result-box { display: none; margin-top: 1.25rem; padding: 1.25rem; border-radius: 12px; text-align: center; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .res-verde { background: rgba(16, 185, 129, 0.15); border: 2px solid var(--green); color: var(--green); }
+        .res-amarillo { background: rgba(245, 158, 11, 0.15); border: 2px solid var(--yellow); color: var(--yellow); }
+        .res-rojo { background: rgba(239, 68, 68, 0.15); border: 2px solid var(--red); color: var(--red); }
+        .result-title { font-size: 1.35rem; font-weight: 800; margin-bottom: 0.35rem; }
+        .result-desc { font-size: 0.95rem; color: #E2E8F0; line-height: 1.4; }
+        
+        .history-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem; }
+        .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .history-title { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+        .btn-clear { background: transparent; border: none; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; text-decoration: underline; }
+        .history-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; max-height: 220px; overflow-y: auto; }
+        .history-item { background: var(--card); padding: 0.6rem 0.85rem; border-radius: 8px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--border); }
+        .history-item.verde { border-left-color: var(--green); }
+        .history-item.amarillo { border-left-color: var(--yellow); }
+        .history-item.rojo { border-left-color: var(--red); }
+        .counter-badge { font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo-box">
+                <span class="logo-badge">CIVIS</span>
+                <span class="title">Verificación Territorial</span>
+            </div>
+            <div class="zone-badge" id="zoneBadge">Conectado</div>
+        </header>
+
+        <main class="main-card">
+            <label class="input-label" for="cedulaInput">Cédula del Ciudadano</label>
+            <div class="input-group">
+                <input type="tel" inputmode="numeric" id="cedulaInput" class="cedula-input" placeholder="Ej: 1002345678" autofocus>
+            </div>
+            <button id="btnVerificar" class="btn-check">VERIFICAR CÉDULA</button>
+
+            <div id="resultBox" class="result-box">
+                <div id="resultTitle" class="result-title"></div>
+                <div id="resultDesc" class="result-desc"></div>
+            </div>
+            <div class="counter-badge" id="counterBadge">Consultas disponibles hoy: ...</div>
+        </main>
+
+        <section class="history-card">
+            <div class="history-header">
+                <span class="history-title">Últimas Verificaciones (Sesión)</span>
+                <button class="btn-clear" id="btnClearHistory">Limpiar</button>
+            </div>
+            <ul class="history-list" id="historyList">
+                <li style="color:var(--text-muted); font-size:0.8rem; text-align:center; padding:1rem;">Sin verificaciones recientes.</li>
+            </ul>
+        </section>
+    </div>
+
+    <script>
+        const TOKEN = window.location.pathname.split('/').pop();
+        const STORAGE_KEY = 'civis_historial_' + TOKEN;
+        const input = document.getElementById('cedulaInput');
+        const btn = document.getElementById('btnVerificar');
+        const resultBox = document.getElementById('resultBox');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultDesc = document.getElementById('resultDesc');
+        const historyList = document.getElementById('historyList');
+        const counterBadge = document.getElementById('counterBadge');
+
+        function loadHistory() {
+            try {
+                return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            } catch(e) { return []; }
+        }
+
+        function saveHistory(item) {
+            let hist = loadHistory();
+            hist.unshift(item);
+            if (hist.length > 20) hist = hist.slice(0, 20);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(hist));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const hist = loadHistory();
+            if (hist.length === 0) {
+                historyList.innerHTML = '<li style="color:var(--text-muted); font-size:0.8rem; text-align:center; padding:1rem;">Sin verificaciones recientes.</li>';
+                return;
+            }
+            historyList.innerHTML = hist.map(h => `
+                <li class="history-item ${h.color}">
+                    <span><strong>CC ${h.cedula}</strong></span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">${h.time} &bull; ${h.estado}</span>
+                </li>
+            `).join('');
+        }
+
+        document.getElementById('btnClearHistory').addEventListener('click', () => {
+            localStorage.removeItem(STORAGE_KEY);
+            renderHistory();
+        });
+
+        async function verificar() {
+            const val = input.value.trim();
+            if (!val || val.length < 5) {
+                alert('Por favor ingrese un número de cédula válido.');
+                input.focus();
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = 'Consultando...';
+            resultBox.style.display = 'none';
+
+            try {
+                const res = await fetch('/api/v1/public/verificar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: TOKEN, cedula: val })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.detail || data.error || 'Error en la verificación.');
+                    btn.disabled = false;
+                    btn.innerText = 'VERIFICAR CÉDULA';
+                    return;
+                }
+
+                resultBox.className = 'result-box res-' + data.color;
+                resultTitle.innerText = data.estado === 'LIBRE' ? '🟢 LIBRE' : (data.estado === 'PROPIO' ? '🟡 YA EN TU CAMPAÑA' : '🔴 EN OTRA ORGANIZACIÓN');
+                resultDesc.innerText = data.mensaje;
+                resultBox.style.display = 'block';
+
+                if (data.consultas_restantes !== undefined) {
+                    counterBadge.innerText = `Consultas disponibles hoy: ${data.consultas_restantes} / ${data.limite_diario}`;
+                }
+
+                saveHistory({
+                    cedula: val,
+                    estado: data.estado,
+                    color: data.color,
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                });
+
+                input.value = '';
+                input.focus();
+            } catch(e) {
+                alert('Fallo de conexión. Verifique su señal.');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'VERIFICAR CÉDULA';
+            }
+        }
+
+        btn.addEventListener('click', verificar);
+        input.addEventListener('keypress', (e) => { if (e.key === 'Enter') verificar(); });
+        renderHistory();
+    </script>
+</body>
+</html>
+"""
+
+@app.get("/v/{token}", response_class=HTMLResponse)
+def servir_pwa_verificador(token: str):
+    """Sirve la PWA Magic Link de verificación territorial de cédulas (sin acceso a plataforma central)."""
+    conn = get_db()
+    cursor = conn.cursor()
+    tok_row = cursor.execute("SELECT * FROM tokens_verificacion WHERE token = ? AND activo IS TRUE", (token,)).fetchone()
+    conn.close()
+    if not tok_row:
+        raise HTTPException(status_code=404, detail="Enlace de verificación no encontrado, inactivo o expirado.")
+    return HTMLResponse(content=PWA_MAGIC_LINK_HTML)
+
+@app.post("/api/v1/public/verificar")
+def public_verificar_cedula(data: PublicVerificarRequest, request: Request):
+    """
+    Endpoint público de verificación territorial para líderes (sin acceso a plataforma ni datos censales).
+    Autentica por token de enlace mágico, aplica rate limiting y devuelve únicamente el color/estado.
+    """
+    token_str = data.token.strip()
+    cedula_limpia = data.cedula.strip()
+    
+    if not token_str or not cedula_limpia:
+        raise HTTPException(status_code=400, detail="Token y cédula requeridos.")
+    
+    check_token_rate_limit(token_str)
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # 1. Validar Token
+    tok_row = cursor.execute("""
+        SELECT * FROM tokens_verificacion 
+        WHERE token = ? AND activo IS TRUE
+    """, (token_str,)).fetchone()
+    
+    if not tok_row:
+        conn.close()
+        raise HTTPException(status_code=401, detail="Token de enlace inválido o revocado.")
+    
+    token_data = dict(tok_row)
+    now = datetime.now()
+    
+    # Validar Expiración
+    exp_str = token_data["fecha_expiracion"]
+    if isinstance(exp_str, str):
+        try:
+            exp_dt = datetime.fromisoformat(exp_str.replace("Z", "+00:00").split("+")[0])
+        except Exception:
+            exp_dt = now + timedelta(days=1)
+    else:
+        exp_dt = exp_str
+    
+    if hasattr(exp_dt, "tzinfo") and exp_dt.tzinfo is not None:
+        exp_dt = exp_dt.replace(tzinfo=None)
+    
+    if exp_dt < now:
+        conn.close()
+        raise HTTPException(status_code=401, detail="El enlace de verificación ha expirado. Solicite renovación a su central.")
+    
+    consultas_hoy = token_data.get("consultas_hoy", 0)
+    limite_diario = token_data.get("limite_diario", 200)
+    
+    if consultas_hoy >= limite_diario:
+        conn.close()
+        raise HTTPException(status_code=429, detail=f"Límite diario de consultas alcanzado ({limite_diario}/día) para este enlace.")
+    
+    # 2. Consultar estado en votantes_campana (Minimización estricta de datos)
+    campana_token = token_data["campana_id"]
+    reg = cursor.execute("SELECT campana_id FROM votantes_campana WHERE cedula = ?", (cedula_limpia,)).fetchone()
+    
+    if not reg:
+        estado = "LIBRE"
+        color = "verde"
+        mensaje = "Puedes entregar esta cédula a la central para registro."
+    elif reg["campana_id"] == campana_token:
+        estado = "PROPIO"
+        color = "amarillo"
+        mensaje = "Esta cédula ya está en tu campaña. No la entregues de nuevo."
+    else:
+        estado = "EXTERNO"
+        color = "rojo"
+        mensaje = "Ya comprometida con otra organización. No la entregues."
+    
+    # 3. Registrar auditoría forense
+    audit_id = str(uuid.uuid4())
+    client_ip = request.client.host if request.client else "unknown"
+    cursor.execute("""
+        INSERT INTO auditoria_verificaciones_publicas (
+            id, token, cedula_consultada, estado_respuesta, canal, ip_origen
+        ) VALUES (?, ?, ?, ?, 'WEB', ?)
+    """, (audit_id, token_str, cedula_limpia, estado, client_ip))
+    
+    cursor.execute("""
+        UPDATE tokens_verificacion 
+        SET consultas_hoy = consultas_hoy + 1 
+        WHERE token = ?
+    """, (token_str,))
+    
+    conn.commit()
+    conn.close()
+    
+    return {
+        "estado": estado,
+        "color": color,
+        "mensaje": mensaje,
+        "consultas_hoy": consultas_hoy + 1,
+        "limite_diario": limite_diario,
+        "consultas_restantes": max(0, limite_diario - (consultas_hoy + 1))
+    }
+
+@app.post("/api/v1/public/sms-inbound")
+async def public_sms_inbound(data: SmsInboundRequest):
+    """
+    Webhook para pasarelas SMS (Hablame / Twilio).
+    Formato inbound: 'CIVIS {token} {cedula}'
+    """
+    text = data.text.strip()
+    from_tel = (data.from_number or "").strip()
+    
+    partes = text.split()
+    if len(partes) < 3 or partes[0].upper() != "CIVIS":
+        return {"response": "Formato incorrecto. Envíe: CIVIS <TOKEN> <CEDULA>"}
+    
+    token_str = partes[1].strip()
+    cedula_limpia = partes[2].strip()
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    tok_row = cursor.execute("SELECT * FROM tokens_verificacion WHERE token = ? AND activo IS TRUE", (token_str,)).fetchone()
+    
+    if not tok_row:
+        conn.close()
+        return {"response": "Token no válido o inactivo."}
+    
+    tok_dict = dict(tok_row)
+    campana_token = tok_dict["campana_id"]
+    reg = cursor.execute("SELECT campana_id FROM votantes_campana WHERE cedula = ?", (cedula_limpia,)).fetchone()
+    
+    if not reg:
+        resp_msg = "🟢 CIVIS: CEDULA LIBRE. Puedes entregarla a la central para registro."
+        estado = "LIBRE"
+    elif reg["campana_id"] == campana_token:
+        resp_msg = "🟡 CIVIS: YA EN TU CAMPANA. No la entregues de nuevo."
+        estado = "PROPIO"
+    else:
+        resp_msg = "🔴 CIVIS: EN OTRA CAMPANA. No la entregues."
+        estado = "EXTERNO"
+    
+    audit_id = str(uuid.uuid4())
+    cursor.execute("""
+        INSERT INTO auditoria_verificaciones_publicas (
+            id, token, cedula_consultada, estado_respuesta, canal, telefono_origen
+        ) VALUES (?, ?, ?, ?, 'SMS', ?)
+    """, (audit_id, token_str, cedula_limpia, estado, from_tel))
+    
+    cursor.execute("UPDATE tokens_verificacion SET consultas_hoy = consultas_hoy + 1 WHERE token = ?", (token_str,))
+    conn.commit()
+    conn.close()
+    
+    return {"response": resp_msg}
+
+# ==============================================================================
+# GESTIÓN DE TOKENS PARA DIRECTIVOS / SUPERADMIN
+# ==============================================================================
+@app.post("/api/v1/superadmin/tokens")
+def generar_token_verificacion(data: CrearTokenRequest, user: dict = Depends(get_current_user)):
+    """Genera un nuevo enlace mágico de verificación para un líder territorial."""
+    campana_id = user.get("campana_id")
+    if not campana_id and user.get("rol") != "SUPERADMIN":
+        raise HTTPException(status_code=400, detail="Se requiere una campaña asignada para emitir tokens.")
+    
+    # Si es Superadmin y no tiene campaña, vincular a la primera disponible o general
+    if not campana_id:
+        conn_temp = get_db()
+        camp = conn_temp.execute("SELECT id FROM campanas LIMIT 1").fetchone()
+        conn_temp.close()
+        campana_id = camp["id"] if camp else "camp-liberal-1"
+    
+    token_val = f"tok_{secrets.token_hex(16)}"
+    now = datetime.now()
+    dias = min(30, max(1, data.duracion_dias or 14))
+    expira = now + timedelta(days=dias)
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO tokens_verificacion (
+            token, directivo_creador_id, campana_id, zona_asignada, telefono_asociado,
+            activo, fecha_expiracion, limite_diario
+        ) VALUES (?, ?, ?, ?, ?, TRUE, ?, ?)
+    """, (
+        token_val,
+        user["id"],
+        campana_id,
+        data.zona_asignada.strip() if data.zona_asignada else "Territorio General",
+        data.telefono_asociado.strip() if data.telefono_asociado else "",
+        expira,
+        data.limite_diario or 200
+    ))
+    conn.commit()
+    conn.close()
+    
+    return {
+        "success": True,
+        "token": token_val,
+        "url_verificacion": f"/v/{token_val}",
+        "zona_asignada": data.zona_asignada,
+        "fecha_expiracion": str(expira),
+        "limite_diario": data.limite_diario or 200
+    }
+
+@app.get("/api/v1/superadmin/tokens")
+def listar_tokens_verificacion(user: dict = Depends(get_current_user)):
+    """Lista los tokens activos e inactivos de la campaña del directivo."""
+    conn = get_db()
+    if user.get("rol") == "SUPERADMIN":
+        tokens = conn.execute("""
+            SELECT t.*, c.nombre as campana_nombre, c.partido 
+            FROM tokens_verificacion t
+            JOIN campanas c ON t.campana_id = c.id
+            ORDER BY t.fecha_creacion DESC
+        """).fetchall()
+    else:
+        tokens = conn.execute("""
+            SELECT t.*, c.nombre as campana_nombre, c.partido 
+            FROM tokens_verificacion t
+            JOIN campanas c ON t.campana_id = c.id
+            WHERE t.campana_id = ?
+            ORDER BY t.fecha_creacion DESC
+        """, (user.get("campana_id"),)).fetchall()
+    conn.close()
+    return [dict(t) for t in tokens]
+
+@app.delete("/api/v1/superadmin/tokens/{token}")
+def revocar_token_verificacion(token: str, user: dict = Depends(get_current_user)):
+    """Revoca inmediatamente un token de verificación territorial."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE tokens_verificacion SET activo = FALSE WHERE token = ?", (token,))
+    conn.commit()
+    conn.close()
+    return {"success": True, "mensaje": "Token revocado exitosamente."}
+
+@app.post("/api/v1/superadmin/tokens/{token}/renovar")
+def renovar_token_verificacion(token: str, data: RenovarTokenRequest, user: dict = Depends(get_current_user)):
+    """Extiende la vigencia del token (hasta máximo 30 días acumulados)."""
+    conn = get_db()
+    cursor = conn.cursor()
+    tok_row = cursor.execute("SELECT * FROM tokens_verificacion WHERE token = ?", (token,)).fetchone()
+    if not tok_row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Token no encontrado.")
+    
+    tok_dict = dict(tok_row)
+    now = datetime.now()
+    dias = min(14, max(1, data.dias_adicionales or 7))
+    nueva_exp = now + timedelta(days=dias)
+    
+    cursor.execute("UPDATE tokens_verificacion SET fecha_expiracion = ?, activo = TRUE WHERE token = ?", (nueva_exp, token))
+    conn.commit()
+    conn.close()
+    return {"success": True, "token": token, "nueva_fecha_expiracion": str(nueva_exp)}
+
+# ==============================================================================
+# GESTIÓN INTERNA DE SOLICITUDES ARCO (LEY 1581 DE 2012)
+# ==============================================================================
+@app.post("/api/v1/superadmin/arco/solicitudes")
+async def registrar_solicitud_arco(data: SolicitudArcoCreate, admin: dict = Depends(require_superadmin)):
+    """Registra una solicitud de Habeas Data recibida por canal externo (correo, radicado, llamada)."""
+    sol_id = f"arco-{uuid.uuid4().hex[:8]}"
+    now = datetime.now()
+    # 10 días hábiles conforme al Art. 11 de la Ley 1581 de 2012
+    limite = now + timedelta(days=14) 
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO solicitudes_arco (
+            id, cedula, tipo, canal_recepcion, fecha_recepcion, fecha_limite_respuesta,
+            evidencia_url, estado, justificacion
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDIENTE', ?)
+    """, (
+        sol_id,
+        data.cedula.strip(),
+        data.tipo.upper(),
+        data.canal_recepcion.upper(),
+        now,
+        limite,
+        data.evidencia_url or "",
+        data.justificacion or ""
+    ))
+    conn.commit()
+    conn.close()
+    
+    await manager.broadcast({
+        "tipo_evento": "SOLICITUD_ARCO_RECIBIDA",
+        "id": sol_id,
+        "cedula": data.cedula.strip(),
+        "tipo": data.tipo.upper(),
+        "plazo_maximo": str(limite)
+    })
+    
+    return {
+        "success": True,
+        "id": sol_id,
+        "cedula": data.cedula.strip(),
+        "tipo": data.tipo.upper(),
+        "fecha_limite_respuesta": str(limite),
+        "mensaje": "Solicitud ARCO registrada. Plazo legal de respuesta: 10 días hábiles."
+    }
+
+@app.get("/api/v1/superadmin/arco/solicitudes")
+def listar_solicitudes_arco(admin: dict = Depends(require_superadmin)):
+    """Lista las solicitudes ARCO registradas con estado de cumplimiento de plazos."""
+    conn = get_db()
+    sols = conn.execute("SELECT * FROM solicitudes_arco ORDER BY fecha_recepcion DESC").fetchall()
+    conn.close()
+    
+    res = []
+    now = datetime.now()
+    for s in sols:
+        s_dict = dict(s)
+        limite = s_dict["fecha_limite_respuesta"]
+        if isinstance(limite, str):
+            try:
+                limite_dt = datetime.fromisoformat(limite.replace("Z", "+00:00").split("+")[0])
+            except Exception:
+                limite_dt = now + timedelta(days=5)
+        else:
+            limite_dt = limite
+        
+        if hasattr(limite_dt, "tzinfo") and limite_dt.tzinfo is not None:
+            limite_dt = limite_dt.replace(tzinfo=None)
+        
+        dias_restantes = (limite_dt - now).days
+        s_dict["dias_restantes"] = dias_restantes
+        s_dict["alerta_vencimiento"] = dias_restantes <= 3 and s_dict["estado"] == "PENDIENTE"
+        res.append(s_dict)
+    return res
+
+@app.post("/api/v1/superadmin/arco/solicitudes/{sol_id}/procesar")
+def procesar_solicitud_arco(sol_id: str, data: ProcesarArcoRequest, admin: dict = Depends(require_superadmin)):
+    """Ejecuta o rechaza una solicitud ARCO con justificación jurídica."""
+    conn = get_db()
+    cursor = conn.cursor()
+    sol = cursor.execute("SELECT * FROM solicitudes_arco WHERE id = ?", (sol_id,)).fetchone()
+    if not sol:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Solicitud ARCO no encontrada.")
+    
+    sol_dict = dict(sol)
+    cedula = sol_dict["cedula"]
+    now = datetime.now()
+    
+    if data.accion.upper() == "EJECUTAR":
+        # Si es CANCELACION u OPOSICION, suprimir datos personales y apoyos
+        if sol_dict["tipo"] in ("CANCELACION", "OPOSICION"):
+            cursor.execute("DELETE FROM apoyos_logistica WHERE votante_id IN (SELECT id FROM votantes_campana WHERE cedula = ?)", (cedula,))
+            cursor.execute("DELETE FROM votantes_campana WHERE cedula = ?", (cedula,))
+        
+        cursor.execute("""
+            UPDATE solicitudes_arco 
+            SET estado = 'EJECUTADA', directivo_procesa_id = ?, fecha_procesamiento = ?, justificacion = ?
+            WHERE id = ?
+        """, (admin["id"], now, data.justificacion, sol_id))
+        msg = f"Solicitud {sol_dict['tipo']} ejecutada para la cédula {cedula}."
+    else:
+        cursor.execute("""
+            UPDATE solicitudes_arco 
+            SET estado = 'RECHAZADA', directivo_procesa_id = ?, fecha_procesamiento = ?, justificacion = ?
+            WHERE id = ?
+        """, (admin["id"], now, data.justificacion, sol_id))
+        msg = f"Solicitud {sol_dict['tipo']} rechazada con justificación registrada."
+    
+    conn.commit()
+    conn.close()
+    return {"success": True, "id": sol_id, "mensaje": msg}
+
+@app.get("/api/v1/superadmin/verificaciones-publicas")
+def listar_verificaciones_publicas(admin: dict = Depends(require_superadmin)):
+    """Consulta la bitácora de verificaciones territoriales realizadas vía link o SMS."""
+    conn = get_db()
+    logs = conn.execute("""
+        SELECT a.*, t.zona_asignada, t.telefono_asociado, c.nombre as campana_nombre 
+        FROM auditoria_verificaciones_publicas a
+        LEFT JOIN tokens_verificacion t ON a.token = t.token
+        LEFT JOIN campanas c ON t.campana_id = c.id
+        ORDER BY a.fecha_consulta DESC
+        LIMIT 200
+    """).fetchall()
+    conn.close()
+    return [dict(l) for l in logs]
 
 # ==============================================================================
 # SERVIR FRONTEND ESTÁTICO (SPA / PWA)
