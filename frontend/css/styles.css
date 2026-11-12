@@ -1532,7 +1532,7 @@ label, .form-label {
    CIVIS v1.1 ENTERPRISE COMMAND CENTER - SIDEBAR & TOPBAR ARCHITECTURE
    ============================================================================== */
 .civis-dashboard-root {
-    display: flex;
+    display: flex !important;
     min-height: 100vh;
     background-color: #080B11;
     color: #F8FAFC;

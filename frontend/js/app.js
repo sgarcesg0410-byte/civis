@@ -24,7 +24,7 @@ function verificarEstadoSesion() {
     }
 
     if (user.rol === 'SUPERADMIN') {
-        viewSuperadmin.style.display = 'block';
+        viewSuperadmin.style.display = 'flex';
         inicializarWarRoomSuperadmin();
     } else {
         // CANDIDATO o LIDER

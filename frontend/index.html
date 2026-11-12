@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Civis | Centro de Mando Electoral & Censo RNEC</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Civis v1.1 | Centro de Mando Enterprise</title>
     
     <!-- Fuentes e Iconos Oficiales -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -12,12 +15,12 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <!-- Favicon Oficial de Votaciones -->
-    <link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=3">
-    <link rel="alternate icon" type="image/svg+xml" href="img/logo-voto.svg?v=3">
-    <link rel="apple-touch-icon" href="img/favicon.svg?v=3">
+    <link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=5">
+    <link rel="alternate icon" type="image/svg+xml" href="img/logo-voto.svg?v=5">
+    <link rel="apple-touch-icon" href="img/favicon.svg?v=5">
     
-    <!-- Hoja de Estilos Ejecutiva -->
-    <link rel="stylesheet" href="css/styles.css?v=3.2">
+    <!-- Hoja de Estilos Ejecutiva v6.0 -->
+    <link rel="stylesheet" href="css/styles.css?v=6.0-DIRECT-TABS">
 
     <style>
         /* Estilos críticos para garantizar visualización inmediata de la foto de fondo */
@@ -488,77 +491,77 @@
                 </button>
             </div>
 
-            <nav class="civis-sidebar-nav">
+            <nav class="nav flex-column civis-sidebar-nav" role="tablist">
                 <!-- SECCIÓN 1: PANEL EJECUTIVO -->
                 <div class="sidebar-section-title">Panel Ejecutivo</div>
-                <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#war-tab-kpis" onclick="actualizarTituloVista('Mando Central & KPIs')">
+                <button type="button" class="nav-link active" data-bs-target="#war-tab-kpis" role="tab" onclick="activarTabSuperadmin('#war-tab-kpis', 'Mando Central & KPIs')">
                     <i class="fas fa-th-large text-primary"></i>
                     <span class="sidebar-text">Mando Central & KPIs</span>
                 </button>
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-padron" onclick="cargarPadronConsolidado(); actualizarTituloVista('Padrón de Votantes')">
+                <button type="button" class="nav-link" data-bs-target="#war-tab-padron" role="tab" onclick="activarTabSuperadmin('#war-tab-padron', 'Padrón de Votantes'); cargarPadronConsolidado()">
                     <i class="fas fa-user-friends text-warning"></i>
                     <span class="sidebar-text">Padrón de Personas</span>
                 </button>
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-mapa" onclick="inicializarMapaSuperadmin(); actualizarTituloVista('Geomapa & Cobertura')">
+                <button type="button" class="nav-link" data-bs-target="#war-tab-mapa" role="tab" onclick="activarTabSuperadmin('#war-tab-mapa', 'Geomapa & Cobertura'); inicializarMapaSuperadmin()">
                     <i class="fas fa-map-marked-alt text-info"></i>
                     <span class="sidebar-text">Geomapa Territorial</span>
                 </button>
 
                 <!-- SECCIÓN 2: OPERACIONES DE CAMPAÑA -->
                 <div class="sidebar-section-title">Operaciones de Campaña</div>
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-cruces" onclick="cargarCrucesGlobales(); actualizarTituloVista('Operaciones & Cruces')">
+                <button type="button" class="nav-link" data-bs-target="#war-tab-cruces" role="tab" onclick="activarTabSuperadmin('#war-tab-cruces', 'Operaciones & Cruces'); cargarCrucesGlobales()">
                     <i class="fas fa-bolt text-danger"></i>
                     <span class="sidebar-text">Operaciones & Cruces</span>
                     <span class="badge bg-danger ms-auto sidebar-badge-count" id="badge-cruces-count">0</span>
                 </button>
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-ranking" onclick="cargarRankingLideres(); actualizarTituloVista('Ranking de Líderes')">
+                <button type="button" class="nav-link" data-bs-target="#war-tab-ranking" role="tab" onclick="activarTabSuperadmin('#war-tab-ranking', 'Ranking de Líderes'); cargarRankingLideres()">
                     <i class="fas fa-trophy text-warning"></i>
                     <span class="sidebar-text">Ranking Territorial</span>
                 </button>
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-eventos" onclick="actualizarTituloVista('Eventos & Asistencia')">
+                <button type="button" class="nav-link" data-bs-target="#war-tab-eventos" role="tab" onclick="activarTabSuperadmin('#war-tab-eventos', 'Eventos & Asistencia')">
                     <i class="fas fa-calendar-check text-success"></i>
                     <span class="sidebar-text">Eventos & Aforo</span>
                 </button>
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-filtro" onclick="inicializarFiltroDinamico(); actualizarTituloVista('Filtro Dinámico')">
+                <button type="button" class="nav-link" data-bs-target="#war-tab-filtro" role="tab" onclick="activarTabSuperadmin('#war-tab-filtro', 'Filtro Dinámico'); inicializarFiltroDinamico()">
                     <i class="fas fa-filter" style="color: #F97316;"></i>
                     <span class="sidebar-text">Filtro Dinámico</span>
                 </button>
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-censo" onclick="actualizarTituloVista('Puestos & Censo RNEC')">
+                <button type="button" class="nav-link" data-bs-target="#war-tab-censo" role="tab" onclick="activarTabSuperadmin('#war-tab-censo', 'Puestos & Censo RNEC')">
                     <i class="fas fa-id-card" style="color: #EC4899;"></i>
                     <span class="sidebar-text">Puesto & Censo RNEC</span>
                 </button>
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-informes" onclick="actualizarTituloVista('Informes & Reportes')">
+                <button type="button" class="nav-link" data-bs-target="#war-tab-informes" role="tab" onclick="activarTabSuperadmin('#war-tab-informes', 'Informes Ejecutivos')">
                     <i class="fas fa-chart-line text-warning"></i>
                     <span class="sidebar-text">Informes Ejecutivos</span>
                 </button>
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-sms" onclick="actualizarTituloVista('Difusión SMS & Cumpleaños')">
+                <button type="button" class="nav-link" data-bs-target="#war-tab-sms" role="tab" onclick="activarTabSuperadmin('#war-tab-sms', 'Difusión SMS & Cumpleaños')">
                     <i class="fas fa-sms text-info"></i>
                     <span class="sidebar-text">Difusión SMS</span>
                 </button>
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-medios" onclick="actualizarTituloVista('Medios & Monitoreo')">
+                <button type="button" class="nav-link" data-bs-target="#war-tab-medios" role="tab" onclick="activarTabSuperadmin('#war-tab-medios', 'Medios & Monitoreo')">
                     <i class="fas fa-bullhorn" style="color: #A855F7;"></i>
                     <span class="sidebar-text">Medios & Noticias</span>
                 </button>
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-app-movil" onclick="actualizarTituloVista('Simulador App Móvil')">
+                <button type="button" class="nav-link" data-bs-target="#war-tab-app-movil" role="tab" onclick="activarTabSuperadmin('#war-tab-app-movil', 'Simulador App Móvil')">
                     <i class="fas fa-qrcode text-secondary"></i>
                     <span class="sidebar-text">Simulador MRZ Móvil</span>
                 </button>
 
                 <!-- SECCIÓN 3: GOBERNANZA & SEGURIDAD v1.1 -->
                 <div class="sidebar-section-title">Gobernanza & Cumplimiento</div>
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-tokens-v11" onclick="cargarTokensTerritoriales(); actualizarTituloVista('Tokens Móviles v1.1')">
+                <button type="button" class="nav-link" data-bs-target="#war-tab-tokens-v11" role="tab" onclick="activarTabSuperadmin('#war-tab-tokens-v11', 'Tokens Móviles v1.1'); cargarTokensTerritoriales()">
                     <i class="fas fa-mobile-alt text-success"></i>
                     <span class="sidebar-text">Tokens Móviles (Líderes)</span>
                 </button>
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-arco-v11" onclick="cargarSolicitudesArco(); actualizarTituloVista('Habeas Data Ley 1581')">
+                <button type="button" class="nav-link" data-bs-target="#war-tab-arco-v11" role="tab" onclick="activarTabSuperadmin('#war-tab-arco-v11', 'Habeas Data Ley 1581'); cargarSolicitudesArco()">
                     <i class="fas fa-balance-scale text-primary"></i>
                     <span class="sidebar-text">Trámites ARCO Ley 1581</span>
                 </button>
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-auditoria" onclick="cargarAuditoriaForense(); actualizarTituloVista('Bitácora Forense')">
+                <button type="button" class="nav-link" data-bs-target="#war-tab-auditoria" role="tab" onclick="activarTabSuperadmin('#war-tab-auditoria', 'Bitácora Forense'); cargarAuditoriaForense()">
                     <i class="fas fa-shield-alt text-info"></i>
                     <span class="sidebar-text">Bitácora Forense</span>
                 </button>
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#war-tab-equipo" onclick="cargarGestionUsuarios(); actualizarTituloVista('Usuarios & Permisos')">
+                <button type="button" class="nav-link" data-bs-target="#war-tab-equipo" role="tab" onclick="activarTabSuperadmin('#war-tab-equipo', 'Usuarios & Permisos'); cargarGestionUsuarios()">
                     <i class="fas fa-users-cog" style="color: #C084FC;"></i>
                     <span class="sidebar-text">Usuarios & Roles</span>
                 </button>
@@ -2507,15 +2510,15 @@
         </div>
     </div>
 
-    <!-- Scripts Esenciales -->
+    <!-- Scripts Esenciales v5.0 -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <script src="js/api.js?v=3.2"></script>
-    <script src="js/lider.js?v=3.2"></script>
-    <script src="js/superadmin.js?v=3.3"></script>
-    <script src="js/app.js?v=3.2"></script>
+    <script src="js/api.js?v=6.0-DIRECT-TABS"></script>
+    <script src="js/lider.js?v=6.0-DIRECT-TABS"></script>
+    <script src="js/superadmin.js?v=6.0-DIRECT-TABS"></script>
+    <script src="js/app.js?v=6.0-DIRECT-TABS"></script>
 
     <script>
         function togglePasswordVisibility() {

@@ -11,6 +11,9 @@ async function inicializarWarRoomSuperadmin() {
         document.getElementById('lbl-admin-nombre').textContent = user.nombre || 'Administrador General';
     }
 
+    // Asegurar visualización del Mando Central por defecto
+    activarTabSuperadmin('#war-tab-kpis', 'Mando Central & KPIs');
+
     // Cargar datos iniciales
     await cargarKpisGlobales();
     await cargarCrucesGlobales();
@@ -711,15 +714,54 @@ function mostrarAlertaIntentoAuditoriaFlotante(info) {
 }
 
 // ==============================================================================
-// 10. ENRUTADOR DE LA MATRIZ DE 12 MÓDULOS DE MANDO (IMAGEN 1)
+// 10. ENRUTADOR DE LA MATRIZ DE MÓDULOS DE MANDO (DIRECCIONAMIENTO DIRECTO ROBUSTO)
 // ==============================================================================
-function activarTabSuperadmin(targetSelector) {
-    const btn = document.querySelector(`button[data-bs-target="${targetSelector}"]`);
+function activarTabSuperadmin(targetSelector, titulo) {
+    // 1. Quitar 'active' de todos los botones de la barra lateral
+    document.querySelectorAll('.civis-sidebar-nav .nav-link').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+    });
+
+    // 2. Activar el botón correspondiente
+    const btn = document.querySelector(`.civis-sidebar-nav .nav-link[data-bs-target="${targetSelector}"]`);
     if (btn) {
-        const tabInstance = bootstrap.Tab.getOrCreateInstance(btn);
-        tabInstance.show();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+        if (!titulo) {
+            const titleSpan = btn.querySelector('.sidebar-text');
+            if (titleSpan) titulo = titleSpan.textContent.trim();
+        }
     }
+
+    // 3. Ocultar todos los paneles de pestañas dentro de civisTabContent
+    document.querySelectorAll('#civisTabContent > .tab-pane').forEach(p => {
+        p.classList.remove('show', 'active');
+        p.style.display = 'none';
+    });
+
+    // 4. Mostrar el panel de destino
+    const targetPane = document.querySelector(targetSelector);
+    if (targetPane) {
+        targetPane.style.display = 'block';
+        targetPane.classList.add('show', 'active');
+    }
+
+    // 5. Actualizar título en el Topbar
+    if (titulo) {
+        actualizarTituloVista(titulo);
+    }
+
+    // 6. Si es el mapa, forzar re-render de Leaflet
+    if (targetSelector === '#war-tab-mapa' && typeof mapaGlobal !== 'undefined' && mapaGlobal) {
+        setTimeout(() => mapaGlobal.invalidateSize(), 150);
+    }
+
+    // 7. Cerrar menú en móviles
+    const sidebar = document.getElementById('civisSidebar');
+    if (sidebar) sidebar.classList.remove('show-mobile');
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function abrirModuloSuperadmin(modulo) {
@@ -1454,6 +1496,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Delegación y enganche de clics en la barra lateral para navegación instantánea
+    document.querySelectorAll('.civis-sidebar-nav .nav-link').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            const target = this.getAttribute('data-bs-target');
+            if (target) {
+                const titleSpan = this.querySelector('.sidebar-text');
+                const title = titleSpan ? titleSpan.textContent.trim() : '';
+                activarTabSuperadmin(target, title);
+            }
+        });
+    });
 });
 
 function ejecutarOmniSearch(term) {
