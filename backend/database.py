@@ -28,6 +28,8 @@ IS_POSTGRES = DATABASE_URL.startswith("postgresql://")
 # Pool global de conexiones para PostgreSQL
 pg_pool = None
 
+ALLOW_SQLITE_FALLBACK = os.getenv("ALLOW_SQLITE_FALLBACK", "false").lower() in ("true", "1", "yes")
+
 if IS_POSTGRES:
     try:
         import psycopg2
@@ -42,7 +44,14 @@ if IS_POSTGRES:
         )
         print(" [Civis DB] Conectado exitosamente a PostgreSQL Administrado en la nube (Pool activo).")
     except Exception as e:
-        print(f"⚠️ [Civis DB] Error al conectar con PostgreSQL ({e}). Usando SQLite local como respaldo.")
+        if not ALLOW_SQLITE_FALLBACK:
+            raise RuntimeError(
+                f"🚨 [Civis DB CRÍTICO] Falló la conexión con la base de datos PostgreSQL principal ({e}).\n"
+                "Para evitar inconsistencias de datos (Split-Brain) y desincronización durante la jornada electoral,\n"
+                "el sistema NO realiza fallback silencioso a SQLite local en entornos con DATABASE_URL activa.\n"
+                "Si requiere operar intencionalmente en modo aislado/offline, configure ALLOW_SQLITE_FALLBACK=true."
+            )
+        print(f"⚠️ [Civis DB ADVERTENCIA] Error al conectar con PostgreSQL ({e}). Modo aislado activado explícitamente: Usando SQLite local.")
         IS_POSTGRES = False
 
 
@@ -153,10 +162,18 @@ def get_db():
     """Retorna una conexión activa (PostgreSQL Administrado o SQLite local)."""
     global IS_POSTGRES, pg_pool
     if IS_POSTGRES and pg_pool:
-        raw_conn = pg_pool.getconn()
-        return PostgresConnectionWrapper(raw_conn, pg_pool)
+        try:
+            raw_conn = pg_pool.getconn()
+            return PostgresConnectionWrapper(raw_conn, pg_pool)
+        except Exception as e:
+            if not ALLOW_SQLITE_FALLBACK:
+                raise RuntimeError(
+                    f"🚨 [Civis DB CRÍTICO] Pérdida de conexión con PostgreSQL ({e}). "
+                    "Operación abortada para evitar desincronización y split-brain."
+                )
+            print(f"⚠️ [Civis DB] Degradación temporal a SQLite local por fallo en pool ({e}).")
     
-    # Modo Local SQLite
+    # Modo Local SQLite (Solo cuando no hay DATABASE_URL o ALLOW_SQLITE_FALLBACK=true)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")

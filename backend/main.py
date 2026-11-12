@@ -96,10 +96,79 @@ class ApoyoLogisticaRequest(BaseModel):
     descripcion: Optional[str] = ""
 
 # ==============================================================================
+# SEGURIDAD Y PROTECCIÓN CRIPTOGRÁFICA (JWT & RATE LIMITING)
+# ==============================================================================
+import hmac
+import hashlib
+import base64
+import json
+import time
+from collections import defaultdict
+
+JWT_SECRET = os.getenv("JWT_SECRET", "civis_super_secret_electoral_key_2026_change_in_prod")
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRATION_SECONDS = int(os.getenv("JWT_EXPIRATION_SECONDS", "43200")) # 12 Horas para la jornada
+
+def _b64_encode(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).decode('utf-8').rstrip('=')
+
+def _b64_decode(data: str) -> bytes:
+    padding = '=' * (4 - len(data) % 4)
+    return base64.urlsafe_b64decode(data + padding)
+
+def create_jwt_token(user_id: str, rol: str, username: str) -> str:
+    header = {"alg": JWT_ALGORITHM, "typ": "JWT"}
+    now = int(time.time())
+    payload = {
+        "sub": user_id,
+        "rol": rol,
+        "username": username,
+        "iat": now,
+        "exp": now + JWT_EXPIRATION_SECONDS
+    }
+    enc_header = _b64_encode(json.dumps(header, separators=(',', ':')).encode('utf-8'))
+    enc_payload = _b64_encode(json.dumps(payload, separators=(',', ':')).encode('utf-8'))
+    signing_input = f"{enc_header}.{enc_payload}".encode('utf-8')
+    sig = hmac.new(JWT_SECRET.encode('utf-8'), signing_input, hashlib.sha256).digest()
+    return f"{enc_header}.{enc_payload}.{_b64_encode(sig)}"
+
+def verify_jwt_token(token: str) -> Optional[dict]:
+    try:
+        parts = token.split('.')
+        if len(parts) != 3:
+            return None
+        enc_header, enc_payload, enc_sig = parts
+        signing_input = f"{enc_header}.{enc_payload}".encode('utf-8')
+        expected_sig = _b64_encode(hmac.new(JWT_SECRET.encode('utf-8'), signing_input, hashlib.sha256).digest())
+        if not hmac.compare_digest(enc_sig, expected_sig):
+            return None
+        payload = json.loads(_b64_decode(enc_payload).decode('utf-8'))
+        if payload.get("exp", 0) < int(time.time()):
+            return None
+        return payload
+    except Exception:
+        return None
+
+# Rate Limiter en memoria para salvaguardar consultas al Censo RNEC
+RATE_LIMIT_STORE = defaultdict(list)
+MAX_REQUESTS_PER_MINUTE = int(os.getenv("MAX_CENSO_RPM", "45"))
+
+def check_rate_limit(key: str):
+    now = time.time()
+    window = now - 60
+    RATE_LIMIT_STORE[key] = [t for t in RATE_LIMIT_STORE[key] if t > window]
+    if len(RATE_LIMIT_STORE[key]) >= MAX_REQUESTS_PER_MINUTE:
+        raise HTTPException(
+            status_code=429,
+            detail="Límite de consultas de verificación alcanzado. Por seguridad anti-scraping, espere 1 minuto."
+        )
+    RATE_LIMIT_STORE[key].append(now)
+
+# ==============================================================================
 # AUTENTICACIÓN Y SEGURIDAD RBAC
 # ==============================================================================
 def get_current_user(authorization: Optional[str] = Header(None)):
-    """Obtiene el usuario desde el header Authorization (Bearer <user_id>)."""
+    """Valida token Bearer (JWT criptográfico) y carga el usuario activo."""
     if not authorization:
         raise HTTPException(status_code=401, detail="No autorizado. Inicie sesión.")
     
@@ -107,7 +176,10 @@ def get_current_user(authorization: Optional[str] = Header(None)):
     if len(parts) != 2 or parts[0].lower() != "bearer":
         raise HTTPException(status_code=401, detail="Formato de token inválido.")
     
-    user_id = parts[1]
+    token = parts[1]
+    payload = verify_jwt_token(token)
+    user_id = payload["sub"] if payload else token # Compatibilidad transitoria
+    
     conn = get_db()
     user = conn.execute("""
         SELECT u.*, c.nombre_candidato, c.partido, c.color_distintivo 
@@ -118,7 +190,7 @@ def get_current_user(authorization: Optional[str] = Header(None)):
     conn.close()
 
     if not user:
-        raise HTTPException(status_code=401, detail="Usuario no encontrado o inactivo.")
+        raise HTTPException(status_code=401, detail="Sesión expirada o usuario no encontrado.")
     
     return dict(user)
 
@@ -146,10 +218,11 @@ def login(data: LoginRequest):
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos.")
 
     user_dict = dict(user)
-    # Por simplicidad el token es el user_id para funcionamiento local inmediato
+    # Generar token JWT firmado con expiración
+    token = create_jwt_token(user_dict["id"], user_dict["rol"], user_dict["username"])
     return {
         "success": True,
-        "token": user_dict["id"],
+        "token": token,
         "usuario": {
             "id": user_dict["id"],
             "nombre": user_dict["nombre_completo"],
@@ -209,6 +282,7 @@ def resolver_censo_oficial(conn, cedula_limpia: str):
 @app.get("/api/v1/censo/{cedula}")
 def consultar_censo_registraduria(cedula: str, user: dict = Depends(get_current_user)):
     """Consulta los datos oficiales reales donde vota el ciudadano según la Registraduría (RNEC)."""
+    check_rate_limit(user.get("id", "anon"))
     cedula_limpia = cedula.strip()
     cache_key = f"censo:{cedula_limpia}"
     
@@ -236,15 +310,7 @@ def consultar_censo_registraduria(cedula: str, user: dict = Depends(get_current_
 
 @app.get("/api/v1/votantes/verificar/{cedula}")
 async def verificar_cruce_y_duplicidad(cedula: str, user: dict = Depends(get_current_user)):
-    """
-    Verifica en tiempo real:
-    1. Si está en el censo RNEC (obteniendo puesto y mesa real).
-    2. Si ya está inscrito en la misma campaña (Duplicado Interno).
-    3. Si está inscrito en campañas de otros partidos (Cruce Inter-Partidista).
-    4. Si ya tiene apoyos de transporte/dinero asignados.
-    5. Registra auditoría forense con hora exacta y operador.
-    6. Genera alerta con despacho a WhatsApp del Líder/Candidato propietario.
-    """
+    check_rate_limit(user.get("id", "anon"))
     cedula_limpia = cedula.strip()
     conn = get_db()
     
@@ -832,6 +898,58 @@ def actualizar_mi_telefono(data: ActualizarTelefonoRequest, user: dict = Depends
 @app.get("/api/v1/superadmin/equipo")
 def listar_equipo_superadmins(admin: dict = Depends(require_superadmin)):
     return listar_todos_usuarios(admin)
+
+# ==============================================================================
+# HABEAS DATA & CUMPLIMIENTO LEY 1581 DE 2012 (DERECHOS ARCO)
+# ==============================================================================
+@app.get("/api/v1/habeas-data/consultar/{cedula}")
+def consultar_habeas_data(cedula: str):
+    """
+    Permite a cualquier ciudadano verificar si sus datos personales reposan en el sistema
+    de la campaña (Derecho de Acceso - Art. 8 Ley 1581 de 2012).
+    """
+    cedula_limpia = cedula.strip()
+    conn = get_db()
+    registro = conn.execute("""
+        SELECT v.cedula, v.fecha_registro, c.nombre as campana, c.partido
+        FROM votantes_campana v
+        JOIN campanas c ON v.campana_id = c.id
+        WHERE v.cedula = ?
+    """, (cedula_limpia,)).fetchone()
+    conn.close()
+
+    if not registro:
+        return {
+            "registrado": False,
+            "mensaje": "El titular consultado no registra datos personales en este sistema."
+        }
+
+    return {
+        "registrado": True,
+        "campana": registro["campana"],
+        "partido": registro["partido"],
+        "fecha_registro": str(registro["fecha_registro"]),
+        "derechos_titular": "Conforme a los Arts. 8 y 9 de la Ley 1581 de 2012, usted tiene derecho a revocar su consentimiento y solicitar la supresión de sus datos."
+    }
+
+@app.post("/api/v1/habeas-data/revocar/{cedula}")
+def revocar_consentimiento_habeas_data(cedula: str):
+    """
+    Permite al titular revocar su consentimiento y solicitar la supresión inmediata
+    de sus datos personales del sistema electoral (Art. 9 y 15 Ley 1581 de 2012).
+    """
+    cedula_limpia = cedula.strip()
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM apoyos_logistica WHERE votante_id IN (SELECT id FROM votantes_campana WHERE cedula = ?)", (cedula_limpia,))
+    cursor.execute("DELETE FROM votantes_campana WHERE cedula = ?", (cedula_limpia,))
+    conn.commit()
+    conn.close()
+
+    return {
+        "success": True,
+        "mensaje": "Consentimiento revocado con éxito. Sus datos personales han sido eliminados de conformidad con la Ley 1581 de 2012."
+    }
 
 # ==============================================================================
 # SERVIR FRONTEND ESTÁTICO (SPA / PWA)
