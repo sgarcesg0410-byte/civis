@@ -14,21 +14,21 @@ function verificarEstadoSesion() {
     const viewSuperadmin = document.getElementById('view-superadmin');
     const viewLider = document.getElementById('view-lider');
 
-    viewLogin.style.display = 'none';
-    viewSuperadmin.style.display = 'none';
-    viewLider.style.display = 'none';
+    if (viewLogin) viewLogin.style.setProperty('display', 'none', 'important');
+    if (viewSuperadmin) viewSuperadmin.style.setProperty('display', 'none', 'important');
+    if (viewLider) viewLider.style.setProperty('display', 'none', 'important');
 
     if (!user) {
-        viewLogin.style.display = 'flex';
+        if (viewLogin) viewLogin.style.setProperty('display', 'flex', 'important');
         return;
     }
 
     if (user.rol === 'SUPERADMIN') {
-        viewSuperadmin.style.display = 'flex';
+        if (viewSuperadmin) viewSuperadmin.style.setProperty('display', 'flex', 'important');
         inicializarWarRoomSuperadmin();
     } else {
         // CANDIDATO o LIDER
-        viewLider.style.display = 'block';
+        if (viewLider) viewLider.style.setProperty('display', 'block', 'important');
         inicializarConsolaLider();
     }
 }

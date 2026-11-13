@@ -44,7 +44,9 @@ class ElectoralAPI {
 
         if (response.status === 401) {
             this.clearSession();
-            window.location.reload();
+            if (typeof verificarEstadoSesion === 'function') {
+                verificarEstadoSesion();
+            }
             throw new Error("Sesión expirada o no autorizada.");
         }
 

@@ -1532,13 +1532,25 @@ label, .form-label {
    CIVIS v1.1 ENTERPRISE MISSION CONTROL - PALANTIR / LINEAR DESIGN SYSTEM
    ============================================================================== */
 .civis-dashboard-root {
-    display: flex !important;
+    display: flex;
     min-height: 100vh;
     background-color: #07090E;
     color: #F8FAFC;
     width: 100%;
     overflow-x: hidden;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#view-superadmin[style*="display: none"] {
+    display: none !important;
+}
+
+#view-login[style*="display: none"] {
+    display: none !important;
+}
+
+#view-lider[style*="display: none"] {
+    display: none !important;
 }
 
 /* SIDEBAR ULTRA-SOBRIA & MONOCROMÁTICA */
