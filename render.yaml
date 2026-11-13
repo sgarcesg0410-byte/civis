@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: civis-warroom
+    runtime: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: DATABASE_URL
+        value: "postgresql://neondb_owner:npg_zjtuTLD3Q6ov@ep-super-glitter-b51o6jfb-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require"
+      - key: PORT
+        value: 10000
